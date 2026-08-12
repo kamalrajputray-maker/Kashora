@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { adminSellerAPI, AdminSellerListItem, AdminSellerListParams } from '../services/api';
-import '../styles/admin.css';
+import { adminSellerAPI, AdminSellerListItem, AdminSellerListParams } from '../../services/api';
+import '../../styles/admin.css';
 
 interface Filters {
   status: string;

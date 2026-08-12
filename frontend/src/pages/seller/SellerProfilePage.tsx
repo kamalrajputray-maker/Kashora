@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { sellerAPI, SellerProfile, SellerProfileUpdate } from '../services/api';
-import '../styles/seller.css';
+import { sellerAPI, SellerProfile, SellerProfileUpdate } from '../../services/api';
+import '../../styles/seller.css';
 
 interface EditMode {
   [key: string]: boolean;

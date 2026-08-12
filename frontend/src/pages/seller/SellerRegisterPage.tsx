@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { authAPI } from '../services/api';
-import '../styles/auth.css';
+import { authAPI } from '../../services/api';
+import '../../styles/auth.css';
 
 interface RegisterFormData {
   phone: string;

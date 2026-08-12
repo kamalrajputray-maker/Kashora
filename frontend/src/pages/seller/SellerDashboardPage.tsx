@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { sellerAPI, SellerDashboard } from '../services/api';
-import '../styles/seller.css';
+import { sellerAPI, SellerDashboard } from '../../services/api';
+import '../../styles/seller.css';
 
 const SellerDashboardPage: React.FC = () => {
   const [dashboard, setDashboard] = useState<SellerDashboard | null>(null);

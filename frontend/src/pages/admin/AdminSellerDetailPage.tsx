@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { adminSellerAPI, AdminSellerDetail } from '../services/api';
-import '../styles/admin.css';
+import { adminSellerAPI, AdminSellerDetail } from '../../services/api';
+import '../../styles/admin.css';
 
 interface ActionModal {
   type: 'approve' | 'reject' | 'suspend' | 'activate' | 'block' | null;
