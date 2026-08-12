@@ -1,7 +1,7 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 
 // API Configuration
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api/v1';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/api/v1';
 
 // Create axios instance
 const apiClient: AxiosInstance = axios.create({
@@ -46,7 +46,7 @@ apiClient.interceptors.response.use(
       } catch (refreshError) {
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
-        window.location.href = '/login';
+        window.location.href = '/seller/login';
         return Promise.reject(refreshError);
       }
     }
@@ -177,7 +177,7 @@ export const sellerAPI = {
 
   updateProfile: (data: SellerProfileUpdate) => {
     const formData = new FormData();
-    
+
     Object.entries(data).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
         formData.append(key, value);
@@ -259,4 +259,114 @@ export const adminSellerAPI = {
     apiClient.post(`/admin/sellers/${sellerId}/block/`),
 };
 
+// ========== CATEGORY APIs ==========
+
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export const catalogAPI = {
+  listCategories: () => apiClient.get<Category[]>('/categories/'),
+};
+
+// ========== PRODUCT APIs ==========
+
+export interface Product {
+  id: string;
+  seller: string;
+  seller_store: string;
+  category: string;
+  category_name: string;
+  name: string;
+  slug: string;
+  description: string;
+  brand: string;
+  base_price: string;
+  compare_at_price: string | null;
+  tax_percentage: string;
+  shipping_charge: string;
+  returnable: boolean;
+  return_window_days: number;
+  status: 'DRAFT' | 'ACTIVE' | 'INACTIVE' | 'ARCHIVED';
+  approval_status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  rejection_reason: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ProductCreatePayload {
+  name: string;
+  slug: string;
+  description: string;
+  brand: string;
+  category: string;
+  base_price: string;
+  compare_at_price?: string | null;
+  tax_percentage: string;
+  shipping_charge: string;
+  returnable: boolean;
+  return_window_days: number;
+  status: string;
+}
+
+export interface ProductListParams {
+  search?: string;
+  status?: string;
+  approval_status?: string;
+  category?: string;
+  min_price?: string;
+  max_price?: string;
+  ordering?: string;
+  page?: number;
+}
+
+export const sellerProductAPI = {
+  list: (params?: ProductListParams) =>
+    apiClient.get<PaginatedResponse<Product>>('/seller/products/', { params }),
+
+  get: (id: string) =>
+    apiClient.get<Product>(`/seller/products/${id}/`),
+
+  create: (data: ProductCreatePayload) =>
+    apiClient.post<Product>('/seller/products/', data),
+
+  update: (id: string, data: Partial<ProductCreatePayload>) =>
+    apiClient.patch<Product>(`/seller/products/${id}/`, data),
+
+  delete: (id: string) =>
+    apiClient.delete(`/seller/products/${id}/`),
+
+  submit: (id: string) =>
+    apiClient.post(`/seller/products/${id}/submit/`),
+};
+
+// ========== ADMIN PRODUCT APIs ==========
+
+export interface AdminProduct extends Product {
+  seller_phone: string;
+}
+
+export const adminProductAPI = {
+  listPending: (params?: { page?: number }) =>
+    apiClient.get<PaginatedResponse<AdminProduct>>('/admin/products/pending/', { params }),
+
+  list: (params?: ProductListParams) =>
+    apiClient.get<PaginatedResponse<AdminProduct>>('/admin/products/', { params }),
+
+  get: (id: string) =>
+    apiClient.get<AdminProduct>(`/admin/products/${id}/`),
+
+  approve: (id: string) =>
+    apiClient.post(`/admin/products/${id}/approve/`),
+
+  reject: (id: string, data: { rejection_reason: string }) =>
+    apiClient.post(`/admin/products/${id}/reject/`, data),
+};
+
 export default apiClient;
+

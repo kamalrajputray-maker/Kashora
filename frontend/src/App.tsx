@@ -13,6 +13,9 @@ import SellerRegisterPage from './pages/seller/SellerRegisterPage';
 // Seller Pages
 import SellerDashboardPage from './pages/seller/SellerDashboardPage';
 import SellerProfilePage from './pages/seller/SellerProfilePage';
+import SellerProductListPage from './pages/seller/SellerProductListPage';
+import SellerProductDetailPage from './pages/seller/SellerProductDetailPage';
+import { SellerProductCreatePage, SellerProductEditPage } from './pages/seller/SellerProductFormPage';
 
 // Admin Pages
 import AdminSellerListPage from './pages/admin/AdminSellerListPage';
@@ -44,6 +47,10 @@ const App: React.FC = () => {
                         <Routes>
                           <Route path="dashboard" element={<SellerDashboardPage />} />
                           <Route path="profile" element={<SellerProfilePage />} />
+                          <Route path="products" element={<SellerProductListPage />} />
+                          <Route path="products/create" element={<SellerProductCreatePage />} />
+                          <Route path="products/:id" element={<SellerProductDetailPage />} />
+                          <Route path="products/:id/edit" element={<SellerProductEditPage />} />
                           <Route path="*" element={<Navigate to="/seller/dashboard" />} />
                         </Routes>
                       </div>

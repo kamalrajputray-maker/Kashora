@@ -9,6 +9,10 @@ from django_filters.rest_framework import DjangoFilterBackend
 
 from apps.accounts.models import SellerProfile
 from apps.accounts.constants import RoleType
+try:
+    from apps.catalog.models import Product as SellerProduct
+except ImportError:
+    SellerProduct = None
 from apps.sellers.serializers import (
     SellerProfileSerializer,
     SellerProfileUpdateSerializer,
@@ -87,19 +91,27 @@ class SellerDashboardAPIView(generics.RetrieveAPIView):
             )
 
     def retrieve(self, request, *args, **kwargs):
-        """Return dashboard data with product and inventory statistics"""
+        """Return dashboard data with real product and inventory statistics"""
         instance = self.get_object()
         serializer = self.get_serializer(instance)
         data = serializer.data
         
-        # Add dashboard statistics
-        # These will return 0 until product and inventory modules are created
+        # Query real product counts from the Product model
+        if SellerProduct is not None:
+            products_qs = SellerProduct.objects.filter(seller=instance)
+            total = products_qs.count()
+            approved = products_qs.filter(approval_status="APPROVED").count()
+            pending = products_qs.filter(approval_status="PENDING").count()
+            rejected = products_qs.filter(approval_status="REJECTED").count()
+        else:
+            total = approved = pending = rejected = 0
+
         data["dashboard"] = {
             "status": instance.get_status_display(),
-            "total_products": 0,
-            "approved_products": 0,
-            "pending_products": 0,
-            "rejected_products": 0,
+            "total_products": total,
+            "approved_products": approved,
+            "pending_products": pending,
+            "rejected_products": rejected,
             "total_inventory": 0,
             "low_stock_products": 0,
         }
