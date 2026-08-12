@@ -99,7 +99,7 @@ class AuthFlowTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         user = User.objects.get(phone="8888888888")
         self.assertEqual(user.role, "SELLER")
-        self.assertEqual(user.seller_profile.seller_status, "PENDING")
+        self.assertEqual(user.seller_profile.status, "PENDING")
 
     def test_public_user_cannot_create_admin(self):
         buyer = User.objects.create_user(

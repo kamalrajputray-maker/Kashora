@@ -134,7 +134,7 @@ class SellerRegistrationSerializer(serializers.ModelSerializer):
             business_name=business_name,
             gst_number=gst_number,
             pan_number=pan_number,
-            seller_status="PENDING",
+            status="PENDING",
         )
         return user
 

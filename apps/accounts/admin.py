@@ -36,9 +36,9 @@ class BuyerProfileAdmin(admin.ModelAdmin):
 
 @admin.register(SellerProfile)
 class SellerProfileAdmin(admin.ModelAdmin):
-    list_display = ["user", "business_name", "seller_status", "kyc_status"]
+    list_display = ["user", "business_name", "status", "kyc_status"]
     search_fields = ["user__phone", "business_name", "gst_number", "pan_number"]
-    list_filter = ["seller_status", "kyc_status"]
+    list_filter = ["status", "kyc_status"]
 
 
 @admin.register(AdminProfile)

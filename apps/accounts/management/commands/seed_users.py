@@ -84,7 +84,7 @@ class Command(BaseCommand):
             if payload["role"] == RoleType.ADMIN.value:
                 AdminProfile.objects.get_or_create(user=user)
             if payload["role"] == RoleType.SELLER.value:
-                SellerProfile.objects.get_or_create(user=user, defaults={"business_name": "Dev Store", "gst_number": "GSTDEV123", "pan_number": "PANDEV123", "seller_status": "PENDING"})
+                SellerProfile.objects.get_or_create(user=user, defaults={"business_name": "Dev Store", "gst_number": "GSTDEV123", "pan_number": "PANDEV123", "status": "PENDING"})
             if payload["role"] == RoleType.BUYER.value:
                 BuyerProfile.objects.get_or_create(user=user)
 

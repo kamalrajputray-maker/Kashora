@@ -118,22 +118,64 @@ class BuyerProfile(models.Model):
 
 
 class SellerProfile(models.Model):
+    STATUS_CHOICES = [
+        ("PENDING", "Pending"),
+        ("APPROVED", "Approved"),
+        ("REJECTED", "Rejected"),
+        ("SUSPENDED", "Suspended"),
+        ("BLOCKED", "Blocked"),
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="seller_profile")
+    
+    # Store Information
+    store_name = models.CharField(max_length=255, blank=True, null=True)
+    store_description = models.TextField(blank=True, null=True)
+    store_logo = models.ImageField(upload_to="seller_logos/", blank=True, null=True)
+    store_banner = models.ImageField(upload_to="seller_banners/", blank=True, null=True)
+    
+    # Business Information
     business_name = models.CharField(max_length=255, blank=True, null=True)
     business_email = models.EmailField(max_length=255, blank=True, null=True)
+    business_phone = models.CharField(max_length=20, blank=True, null=True)
+    
+    # Address Information
+    address_line_1 = models.CharField(max_length=255, blank=True, null=True)
+    address_line_2 = models.CharField(max_length=255, blank=True, null=True)
+    city = models.CharField(max_length=100, blank=True, null=True)
+    state = models.CharField(max_length=100, blank=True, null=True)
+    postal_code = models.CharField(max_length=20, blank=True, null=True)
+    country = models.CharField(max_length=100, blank=True, null=True)
+    
+    # Tax Information
     gst_number = models.CharField(max_length=50, blank=True, null=True, db_index=True)
     pan_number = models.CharField(max_length=50, blank=True, null=True, db_index=True)
+    
+    # Status Fields
     kyc_status = models.CharField(max_length=50, default="PENDING")
-    seller_status = models.CharField(max_length=20, default="PENDING")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="PENDING", db_index=True)
+    
+    # Rejection Information
+    rejection_reason = models.TextField(blank=True, null=True)
+    rejected_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="rejected_sellers")
+    rejected_at = models.DateTimeField(null=True, blank=True)
+    
+    # Timestamps
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         db_table = "seller_profiles"
+        indexes = [
+            models.Index(fields=["status"]),
+            models.Index(fields=["city"]),
+            models.Index(fields=["state"]),
+            models.Index(fields=["created_at"]),
+        ]
 
     def __str__(self):
-        return f"SellerProfile: {self.user.phone}"
+        return f"SellerProfile: {self.user.phone} ({self.status})"
 
 
 class AdminProfile(models.Model):
