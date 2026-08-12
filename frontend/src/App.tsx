@@ -9,6 +9,11 @@ import AdminNavigation from './components/AdminNavigation';
 // Auth Pages
 import SellerLoginPage from './pages/seller/SellerLoginPage';
 import SellerRegisterPage from './pages/seller/SellerRegisterPage';
+import AdminLoginPage from './pages/admin/AdminLoginPage';
+import BuyerLoginPage from './pages/buyer/BuyerLoginPage';
+
+// Buyer Pages
+import BuyerDashboardPage from './pages/buyer/BuyerDashboardPage';
 
 // Seller Pages
 import SellerDashboardPage from './pages/seller/SellerDashboardPage';
@@ -24,6 +29,8 @@ import AdminSellerDetailPage from './pages/admin/AdminSellerDetailPage';
 // Not Found
 import NotFoundPage from './pages/NotFoundPage';
 
+const ADMIN_ROLES = ['ADMIN', 'SUPER_ADMIN'];
+
 const App: React.FC = () => {
   return (
     <AuthProvider>
@@ -32,11 +39,26 @@ const App: React.FC = () => {
           <Navbar />
           <div className="app-content">
             <Routes>
-              {/* Auth Routes */}
+              {/* ── Public Auth Routes ── */}
+              <Route path="/login" element={<BuyerLoginPage />} />
               <Route path="/seller/login" element={<SellerLoginPage />} />
               <Route path="/seller/register" element={<SellerRegisterPage />} />
+              <Route path="/admin/login" element={<AdminLoginPage />} />
 
-              {/* Seller Routes */}
+              {/* ── Buyer Routes ── */}
+              <Route
+                path="/buyer/*"
+                element={
+                  <ProtectedRoute requiredRole="BUYER">
+                    <Routes>
+                      <Route path="dashboard" element={<BuyerDashboardPage />} />
+                      <Route path="*" element={<Navigate to="/buyer/dashboard" />} />
+                    </Routes>
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* ── Seller Routes ── */}
               <Route
                 path="/seller/*"
                 element={
@@ -59,20 +81,17 @@ const App: React.FC = () => {
                 }
               />
 
-              {/* Admin Routes */}
+              {/* ── Admin & SuperAdmin Routes ── */}
               <Route
                 path="/admin/*"
                 element={
-                  <ProtectedRoute requiredRole="ADMIN">
+                  <ProtectedRoute requiredRole={ADMIN_ROLES}>
                     <div className="admin-layout">
                       <AdminNavigation />
                       <div className="admin-content">
                         <Routes>
                           <Route path="sellers" element={<AdminSellerListPage />} />
-                          <Route
-                            path="sellers/:sellerId"
-                            element={<AdminSellerDetailPage />}
-                          />
+                          <Route path="sellers/:sellerId" element={<AdminSellerDetailPage />} />
                           <Route path="*" element={<Navigate to="/admin/sellers" />} />
                         </Routes>
                       </div>
@@ -81,8 +100,8 @@ const App: React.FC = () => {
                 }
               />
 
-              {/* Redirects */}
-              <Route path="/" element={<Navigate to="/seller/login" />} />
+              {/* ── Redirects ── */}
+              <Route path="/" element={<Navigate to="/login" />} />
               <Route path="*" element={<NotFoundPage />} />
             </Routes>
           </div>

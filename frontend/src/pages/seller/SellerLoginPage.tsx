@@ -9,10 +9,7 @@ interface LoginFormData {
 }
 
 const SellerLoginPage: React.FC = () => {
-  const [formData, setFormData] = useState<LoginFormData>({
-    phone: '',
-    password: '',
-  });
+  const [formData, setFormData] = useState<LoginFormData>({ phone: '', password: '' });
   const [errors, setErrors] = useState<Partial<LoginFormData>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -22,56 +19,54 @@ const SellerLoginPage: React.FC = () => {
 
   const validateForm = (): boolean => {
     const newErrors: Partial<LoginFormData> = {};
-
     if (!formData.phone.trim()) {
       newErrors.phone = 'Phone number is required';
     } else if (!/^\d{10,}$/.test(formData.phone.replace(/\D/g, ''))) {
       newErrors.phone = 'Phone number must be at least 10 digits';
     }
-
     if (!formData.password) {
       newErrors.password = 'Password is required';
     } else if (formData.password.length < 8) {
       newErrors.password = 'Password must be at least 8 characters';
     }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-    // Clear error for this field
+    setFormData(prev => ({ ...prev, [name]: value }));
     if (errors[name as keyof LoginFormData]) {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: undefined,
-      }));
+      setErrors(prev => ({ ...prev, [name]: undefined }));
     }
   };
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setApiError(null);
-
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     try {
       setIsLoading(true);
-      await login(formData.phone, formData.password);
-      navigate('/seller/dashboard');
+      const data = await login(formData.phone, formData.password);
+      const role = data.user?.role;
+      if (role === 'SELLER') {
+        navigate('/seller/dashboard');
+      } else if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
+        // Admin accidentally used seller login — send them to admin panel
+        navigate('/admin/sellers');
+      } else {
+        setApiError('Login successful, but no seller account found for this user.');
+        localStorage.clear();
+      }
     } catch (err: any) {
-      const errorMessage =
-        err.response?.data?.detail ||
+      const d = err.response?.data;
+      const msg =
+        d?.non_field_errors?.[0] ||
+        d?.detail ||
         err.message ||
         'Login failed. Please try again.';
-      setApiError(errorMessage);
+      setApiError(msg);
     } finally {
       setIsLoading(false);
     }
@@ -118,11 +113,7 @@ const SellerLoginPage: React.FC = () => {
             {errors.password && <span className="error-text">{errors.password}</span>}
           </div>
 
-          <button
-            type="submit"
-            className="btn btn-primary btn-lg"
-            disabled={isLoading}
-          >
+          <button type="submit" className="btn btn-primary btn-lg" disabled={isLoading}>
             {isLoading ? 'Logging in...' : 'Login'}
           </button>
         </form>
@@ -130,15 +121,11 @@ const SellerLoginPage: React.FC = () => {
         <div className="auth-footer">
           <p>
             Don't have a seller account?{' '}
-            <Link to="/seller/register" className="link">
-              Register here
-            </Link>
+            <Link to="/seller/register" className="link">Register here</Link>
           </p>
           <p>
-            Are you a buyer?{' '}
-            <Link to="/login" className="link">
-              Buyer login
-            </Link>
+            Admin?{' '}
+            <Link to="/admin/login" className="link">Admin Login</Link>
           </p>
         </div>
 

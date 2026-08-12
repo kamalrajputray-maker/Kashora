@@ -4,7 +4,11 @@ import { useAuth } from '../context/AuthContext';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
-  requiredRole?: string;
+  /**
+   * A single role string OR an array of allowed roles.
+   * e.g. requiredRole="SELLER"  OR  requiredRole={["ADMIN","SUPER_ADMIN"]}
+   */
+  requiredRole?: string | string[];
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole }) => {
@@ -15,16 +19,18 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole 
   }
 
   if (!isAuthenticated || !user) {
+    // Send each role type to the right login page
     return <Navigate to="/seller/login" replace />;
   }
 
-  if (requiredRole && user.role !== requiredRole) {
-    // Redirect based on user role
-    if (user.role === 'SELLER') {
-      return <Navigate to="/seller/dashboard" replace />;
-    } else if (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') {
-      return <Navigate to="/admin/sellers" replace />;
-    } else {
+  if (requiredRole) {
+    const allowed = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
+    if (!allowed.includes(user.role)) {
+      // Redirect to the page appropriate for their actual role
+      if (user.role === 'SELLER') return <Navigate to="/seller/dashboard" replace />;
+      if (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN')
+        return <Navigate to="/admin/sellers" replace />;
+      if (user.role === 'BUYER') return <Navigate to="/buyer/dashboard" replace />;
       return <Navigate to="/seller/login" replace />;
     }
   }

@@ -1,7 +1,16 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 
 // API Configuration
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/api/v1';
+// Ensure trailing slash and /api/v1 path so relative paths resolve correctly
+let API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/api/v1';
+
+// If the URL is just http://localhost:8000 from a stale env var, append /api/v1
+if (!API_BASE_URL.includes('/api/v1')) {
+  API_BASE_URL = API_BASE_URL.replace(/\/$/, '') + '/api/v1';
+}
+if (!API_BASE_URL.endsWith('/')) {
+  API_BASE_URL += '/';
+}
 
 // Create axios instance
 const apiClient: AxiosInstance = axios.create({
@@ -35,7 +44,7 @@ apiClient.interceptors.response.use(
           throw new Error('No refresh token available');
         }
 
-        const response = await axios.post(`${API_BASE_URL}/auth/token/refresh/`, {
+        const response = await axios.post(`${API_BASE_URL}auth/token/refresh/`, {
           refresh: refreshToken,
         });
 
@@ -94,22 +103,22 @@ export interface RegisterResponse {
 
 export const authAPI = {
   login: (data: LoginRequest) =>
-    apiClient.post<LoginResponse>('/auth/login/', data),
+    apiClient.post<LoginResponse>('auth/login/', data),
 
   logout: (data: { refresh: string }) =>
-    apiClient.post('/auth/logout/', data),
+    apiClient.post('auth/logout/', data),
 
   refreshToken: (refresh: string) =>
-    apiClient.post('/auth/token/refresh/', { refresh }),
+    apiClient.post('auth/token/refresh/', { refresh }),
 
   getCurrentUser: () =>
-    apiClient.get('/auth/me/'),
+    apiClient.get('auth/me/'),
 
   registerSeller: (data: RegisterRequest) =>
-    apiClient.post<RegisterResponse>('/auth/register/seller/', data),
+    apiClient.post<RegisterResponse>('auth/register/seller/', data),
 
   registerBuyer: (data: Omit<RegisterRequest, 'business_name' | 'gst_number' | 'pan_number'>) =>
-    apiClient.post<RegisterResponse>('/auth/register/buyer/', data),
+    apiClient.post<RegisterResponse>('auth/register/buyer/', data),
 };
 
 // ========== SELLER PROFILE APIS ==========
@@ -173,7 +182,7 @@ export interface SellerDashboard extends SellerProfile {
 
 export const sellerAPI = {
   getProfile: () =>
-    apiClient.get<SellerProfile>('/seller/profile/'),
+    apiClient.get<SellerProfile>('seller/profile/'),
 
   updateProfile: (data: SellerProfileUpdate) => {
     const formData = new FormData();
@@ -184,13 +193,13 @@ export const sellerAPI = {
       }
     });
 
-    return apiClient.patch<SellerProfile>('/seller/profile/', formData, {
+    return apiClient.patch<SellerProfile>('seller/profile/', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
   },
 
   getDashboard: () =>
-    apiClient.get<SellerDashboard>('/seller/dashboard/'),
+    apiClient.get<SellerDashboard>('seller/dashboard/'),
 };
 
 // ========== ADMIN SELLER APIS ==========
@@ -236,27 +245,25 @@ export interface AdminSellerListParams {
 
 export const adminSellerAPI = {
   listSellers: (params?: AdminSellerListParams) =>
-    apiClient.get<PaginatedResponse<AdminSellerListItem>>('/admin/sellers/', {
-      params,
-    }),
+    apiClient.get<PaginatedResponse<AdminSellerListItem>>('admin/sellers/', { params }),
 
   getSellerDetail: (sellerId: string) =>
-    apiClient.get<AdminSellerDetail>(`/admin/sellers/${sellerId}/`),
+    apiClient.get<AdminSellerDetail>(`admin/sellers/${sellerId}/`),
 
   approveSeller: (sellerId: string) =>
-    apiClient.post(`/admin/sellers/${sellerId}/approve/`),
+    apiClient.post(`admin/sellers/${sellerId}/approve/`),
 
   rejectSeller: (sellerId: string, data: { rejection_reason: string }) =>
-    apiClient.post(`/admin/sellers/${sellerId}/reject/`, data),
+    apiClient.post(`admin/sellers/${sellerId}/reject/`, data),
 
   suspendSeller: (sellerId: string) =>
-    apiClient.post(`/admin/sellers/${sellerId}/suspend/`),
+    apiClient.post(`admin/sellers/${sellerId}/suspend/`),
 
   activateSeller: (sellerId: string) =>
-    apiClient.post(`/admin/sellers/${sellerId}/activate/`),
+    apiClient.post(`admin/sellers/${sellerId}/activate/`),
 
   blockSeller: (sellerId: string) =>
-    apiClient.post(`/admin/sellers/${sellerId}/block/`),
+    apiClient.post(`admin/sellers/${sellerId}/block/`),
 };
 
 // ========== CATEGORY APIs ==========
@@ -271,7 +278,7 @@ export interface Category {
 }
 
 export const catalogAPI = {
-  listCategories: () => apiClient.get<Category[]>('/categories/'),
+  listCategories: () => apiClient.get<Category[]>('categories/'),
 };
 
 // ========== PRODUCT APIs ==========
@@ -327,22 +334,22 @@ export interface ProductListParams {
 
 export const sellerProductAPI = {
   list: (params?: ProductListParams) =>
-    apiClient.get<PaginatedResponse<Product>>('/seller/products/', { params }),
+    apiClient.get<PaginatedResponse<Product>>('seller/products/', { params }),
 
   get: (id: string) =>
-    apiClient.get<Product>(`/seller/products/${id}/`),
+    apiClient.get<Product>(`seller/products/${id}/`),
 
   create: (data: ProductCreatePayload) =>
-    apiClient.post<Product>('/seller/products/', data),
+    apiClient.post<Product>('seller/products/', data),
 
   update: (id: string, data: Partial<ProductCreatePayload>) =>
-    apiClient.patch<Product>(`/seller/products/${id}/`, data),
+    apiClient.patch<Product>(`seller/products/${id}/`, data),
 
   delete: (id: string) =>
-    apiClient.delete(`/seller/products/${id}/`),
+    apiClient.delete(`seller/products/${id}/`),
 
   submit: (id: string) =>
-    apiClient.post(`/seller/products/${id}/submit/`),
+    apiClient.post(`seller/products/${id}/submit/`),
 };
 
 // ========== ADMIN PRODUCT APIs ==========
@@ -353,20 +360,19 @@ export interface AdminProduct extends Product {
 
 export const adminProductAPI = {
   listPending: (params?: { page?: number }) =>
-    apiClient.get<PaginatedResponse<AdminProduct>>('/admin/products/pending/', { params }),
+    apiClient.get<PaginatedResponse<AdminProduct>>('admin/products/pending/', { params }),
 
   list: (params?: ProductListParams) =>
-    apiClient.get<PaginatedResponse<AdminProduct>>('/admin/products/', { params }),
+    apiClient.get<PaginatedResponse<AdminProduct>>('admin/products/', { params }),
 
   get: (id: string) =>
-    apiClient.get<AdminProduct>(`/admin/products/${id}/`),
+    apiClient.get<AdminProduct>(`admin/products/${id}/`),
 
   approve: (id: string) =>
-    apiClient.post(`/admin/products/${id}/approve/`),
+    apiClient.post(`admin/products/${id}/approve/`),
 
   reject: (id: string, data: { rejection_reason: string }) =>
-    apiClient.post(`/admin/products/${id}/reject/`, data),
+    apiClient.post(`admin/products/${id}/reject/`, data),
 };
 
 export default apiClient;
-

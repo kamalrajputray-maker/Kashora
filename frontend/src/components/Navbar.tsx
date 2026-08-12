@@ -9,21 +9,21 @@ const Navbar: React.FC = () => {
   const { user, logout, isAuthenticated } = useAuth();
 
   const handleLogout = async () => {
-    logout();
-    navigate('/seller/login');
+    await logout();
+    // Send each role to its own login
+    if (user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN') {
+      navigate('/admin/login');
+    } else if (user?.role === 'SELLER') {
+      navigate('/seller/login');
+    } else {
+      navigate('/login');
+    }
   };
 
-  // Hide navbar on login/register pages
-  if (
-    location.pathname === '/seller/login' ||
-    location.pathname === '/seller/register'
-  ) {
-    return null;
-  }
-
-  if (!isAuthenticated) {
-    return null;
-  }
+  // Hide navbar on all login/register pages
+  const hiddenPaths = ['/seller/login', '/seller/register', '/admin/login', '/login'];
+  if (hiddenPaths.includes(location.pathname)) return null;
+  if (!isAuthenticated) return null;
 
   return (
     <nav className="navbar">
