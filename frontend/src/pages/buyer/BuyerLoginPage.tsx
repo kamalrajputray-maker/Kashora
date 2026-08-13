@@ -23,7 +23,7 @@ const BuyerLoginPage: React.FC = () => {
       const data = await login(phone, password);
       const role = data.user?.role;
       if (role === 'BUYER') {
-        navigate('/buyer/dashboard');
+        navigate('/products');
       } else if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
         navigate('/admin/sellers');
       } else if (role === 'SELLER') {

@@ -16,6 +16,9 @@ import BuyerLoginPage from './pages/buyer/BuyerLoginPage';
 import BuyerDashboardPage from './pages/buyer/BuyerDashboardPage';
 import ProductListPage from './pages/buyer/ProductListPage';
 import ProductDetailPage from './pages/buyer/ProductDetailPage';
+import BuyerProfilePage from './pages/buyer/BuyerProfilePage';
+import CartPage from './pages/buyer/CartPage';
+import WishlistPage from './pages/buyer/WishlistPage';
 
 // Seller Pages
 import SellerDashboardPage from './pages/seller/SellerDashboardPage';
@@ -60,6 +63,9 @@ const App: React.FC = () => {
               <Route path="/products" element={<ProductListPage />} />
               <Route path="/products/:slug" element={<ProductDetailPage />} />
               <Route path="/categories/:slug" element={<CategoryRedirect />} />
+              <Route path="/profile" element={<ProtectedRoute requiredRole={["BUYER", "SELLER"]}><BuyerProfilePage /></ProtectedRoute>} />
+              <Route path="/cart" element={<ProtectedRoute requiredRole={["BUYER", "SELLER"]}><CartPage /></ProtectedRoute>} />
+              <Route path="/wishlist" element={<ProtectedRoute requiredRole={["BUYER", "SELLER"]}><WishlistPage /></ProtectedRoute>} />
 
               {/* ── Buyer Routes ── */}
               <Route

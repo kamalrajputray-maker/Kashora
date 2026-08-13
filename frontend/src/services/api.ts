@@ -606,4 +606,61 @@ export const sellerInventoryAPI = {
     apiClient.get<InventoryTransaction[]>(`seller/inventory/${id}/transactions/`),
 };
 
+export interface CartItem {
+  id: string;
+  variant_id: string;
+  sku: string;
+  product_name: string;
+  product_slug: string;
+  price: string;
+  quantity: number;
+  subtotal: number;
+  in_stock: boolean;
+  available_quantity: number;
+  primary_image: string | null;
+  created_at: string;
+}
+
+export interface Cart {
+  id: string;
+  items: CartItem[];
+  total_price: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface WishlistItem {
+  id: string;
+  variant_id: string;
+  sku: string;
+  product_name: string;
+  product_slug: string;
+  price: string;
+  in_stock: boolean;
+  primary_image: string | null;
+  created_at: string;
+}
+
+export const cartAPI = {
+  get: () =>
+    apiClient.get<Cart>('cart/'),
+  add: (variantId: string, quantity: number = 1) =>
+    apiClient.post<Cart>('cart/add/', { variant_id: variantId, quantity }),
+  updateItem: (itemId: string, quantity: number) =>
+    apiClient.patch<Cart>(`cart/item/${itemId}/`, { quantity }),
+  deleteItem: (itemId: string) =>
+    apiClient.delete<Cart>(`cart/item/${itemId}/`),
+  clear: () =>
+    apiClient.post('cart/clear/'),
+};
+
+export const wishlistAPI = {
+  list: () =>
+    apiClient.get<WishlistItem[]>('wishlist/'),
+  add: (variantId: string) =>
+    apiClient.post<WishlistItem>('wishlist/add/', { variant_id: variantId }),
+  delete: (id: string) =>
+    apiClient.delete(`wishlist/${id}/`),
+};
+
 export default apiClient;

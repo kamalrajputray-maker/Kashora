@@ -30,7 +30,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole 
       if (user.role === 'SELLER') return <Navigate to="/seller/dashboard" replace />;
       if (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN')
         return <Navigate to="/admin/sellers" replace />;
-      if (user.role === 'BUYER') return <Navigate to="/buyer/dashboard" replace />;
+      if (user.role === 'BUYER') return <Navigate to="/products" replace />;
       return <Navigate to="/seller/login" replace />;
     }
   }
