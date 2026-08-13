@@ -21,6 +21,7 @@ class SellerInventoryViewSet(viewsets.ReadOnlyModelViewSet):
     """
     permission_classes = [IsAuthenticated, IsSeller]
     serializer_class = InventorySerializer
+    pagination_class = None
 
     def get_queryset(self):
         try:
