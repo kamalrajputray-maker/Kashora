@@ -40,7 +40,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_role(self, obj):
         primary_role = obj.primary_role
-        return primary_role.name if primary_role else None
+        return primary_role.role.name if primary_role else None
 
 
 class BuyerRegistrationSerializer(serializers.ModelSerializer):

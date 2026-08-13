@@ -17,8 +17,8 @@ from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
 from apps.accounts.constants import RoleType
-from apps.accounts.models import Role, SellerProfile, UserRole
-from apps.catalog.models import Category, Product
+from apps.accounts.models import Role, SellerProfile, BuyerProfile, UserRole
+from apps.catalog.models import Category, Product, ProductAttribute, ProductAttributeValue, ProductVariant
 
 User = get_user_model()
 
@@ -429,3 +429,229 @@ class ProductFilterTests(BaseProductTestCase):
         self.assertEqual(resp.status_code, status.HTTP_200_OK)
         self.assertEqual(len(resp.data["results"]), 1)
         self.assertEqual(resp.data["results"][0]["name"], "Unique Gadget")
+
+
+class CategoryManagementTests(APITestCase):
+    def setUp(self):
+        # Create users
+        self.super_admin, _ = User.objects.get_or_create(phone="9000000001", defaults={"email": "sa@demo.local"})
+        self.super_admin.set_password("Demo@1234")
+        self.super_admin.save()
+        sa_role, _ = Role.objects.get_or_create(name="SUPER_ADMIN")
+        UserRole.objects.get_or_create(user=self.super_admin, role=sa_role, is_primary=True)
+
+        self.buyer, _ = User.objects.get_or_create(phone="9000000201", defaults={"email": "b1@demo.local"})
+        self.buyer.set_password("Demo@1234")
+        self.buyer.save()
+        b_role, _ = Role.objects.get_or_create(name="BUYER")
+        UserRole.objects.get_or_create(user=self.buyer, role=b_role, is_primary=True)
+        BuyerProfile.objects.get_or_create(user=self.buyer)
+
+        # Get tokens
+        resp = self.client.post("/api/v1/auth/login/", {"phone": "9000000001", "password": "Demo@1234"})
+        self.admin_token = resp.data["access"]
+        
+        resp = self.client.post("/api/v1/auth/login/", {"phone": "9000000201", "password": "Demo@1234"})
+        self.buyer_token = resp.data["access"]
+
+    def test_admin_can_create_category(self):
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.admin_token}")
+        data = {"name": "Test Category", "is_active": True}
+        response = self.client.post("/api/v1/admin/categories/", data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Category.objects.count(), 1)
+        self.assertEqual(Category.objects.first().slug, "test-category")
+
+    def test_circular_hierarchy_prevented(self):
+        cat1 = Category.objects.create(name="Cat 1")
+        cat2 = Category.objects.create(name="Cat 2", parent=cat1)
+        
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.admin_token}")
+        response = self.client.patch(f"/api/v1/admin/categories/{cat1.id}/", {"parent": str(cat2.id)})
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("parent", response.data)
+
+    def test_safe_deletion(self):
+        cat1 = Category.objects.create(name="Cat 1")
+        Category.objects.create(name="Cat 2", parent=cat1)
+
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.admin_token}")
+        response = self.client.delete(f"/api/v1/admin/categories/{cat1.id}/")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("detail", response.data)
+        
+    def test_public_api_only_shows_active(self):
+        cat1 = Category.objects.create(name="Active Cat", is_active=True)
+        cat2 = Category.objects.create(name="Inactive Cat", is_active=False)
+
+        response = self.client.get("/api/v1/categories/")
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Should only return the active one
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["id"], str(cat1.id))
+
+
+class ProductVariantTests(APITestCase):
+    """Tests for Product Attributes and Variants."""
+
+    def setUp(self):
+        # ── Seller A (owns the products we test)
+        self.sellerA_user, _ = User.objects.get_or_create(phone="9100000001", defaults={"email": "sellerA@demo.local"})
+        self.sellerA_user.set_password("Demo@1234")
+        self.sellerA_user.save()
+        role_seller, _ = Role.objects.get_or_create(name="SELLER")
+        UserRole.objects.get_or_create(user=self.sellerA_user, role=role_seller, is_primary=True)
+        self.sellerA_profile, _ = SellerProfile.objects.get_or_create(
+            user=self.sellerA_user,
+            defaults={"store_name": "Seller A Store", "pan_number": "ABCDE1234A", "gst_number": "27ABCDE1234A1Z5"}
+        )
+
+        # ── Seller B (isolation tests)
+        self.sellerB_user, _ = User.objects.get_or_create(phone="9100000002", defaults={"email": "sellerB@demo.local"})
+        self.sellerB_user.set_password("Demo@1234")
+        self.sellerB_user.save()
+        UserRole.objects.get_or_create(user=self.sellerB_user, role=role_seller, is_primary=True)
+        self.sellerB_profile, _ = SellerProfile.objects.get_or_create(
+            user=self.sellerB_user,
+            defaults={"store_name": "Seller B Store", "pan_number": "FGHIJ5678B", "gst_number": "27FGHIJ5678B1Z5"}
+        )
+
+        # ── Buyer
+        self.buyer_user, _ = User.objects.get_or_create(phone="9100000003", defaults={"email": "buyer1@demo.local"})
+        self.buyer_user.set_password("Demo@1234")
+        self.buyer_user.save()
+        role_buyer, _ = Role.objects.get_or_create(name="BUYER")
+        UserRole.objects.get_or_create(user=self.buyer_user, role=role_buyer, is_primary=True)
+        BuyerProfile.objects.get_or_create(user=self.buyer_user)
+
+        # ── Product for Seller A
+        self.category = Category.objects.create(name="Variant Test Category", slug="variant-test-cat")
+        self.product = Product.objects.create(
+            seller=self.sellerA_profile,
+            category=self.category,
+            name="Women's Kurti",
+            slug="womens-kurti-vartest",
+            description="A beautiful kurti.",
+            brand="BIBA",
+            base_price="499.00",
+            tax_percentage="5",
+            shipping_charge="0",
+        )
+
+        # Tokens
+        resp = self.client.post("/api/v1/auth/login/", {"phone": "9100000001", "password": "Demo@1234"})
+        self.tokenA = resp.data["access"]
+        resp = self.client.post("/api/v1/auth/login/", {"phone": "9100000002", "password": "Demo@1234"})
+        self.tokenB = resp.data["access"]
+        resp = self.client.post("/api/v1/auth/login/", {"phone": "9100000003", "password": "Demo@1234"})
+        self.tokenBuyer = resp.data["access"]
+
+        self.attr_url = f"/api/v1/seller/products/{self.product.id}/attributes/"
+        self.variant_url = f"/api/v1/seller/products/{self.product.id}/variants/"
+
+    def _auth(self, token):
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
+
+    # ── Attribute tests ──────────────────────────────────────────────────────
+
+    def test_create_attribute(self):
+        self._auth(self.tokenA)
+        res = self.client.post(self.attr_url, {"name": "Color"})
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(ProductAttribute.objects.filter(product=self.product).count(), 1)
+
+    def test_duplicate_attribute_name_rejected(self):
+        self._auth(self.tokenA)
+        self.client.post(self.attr_url, {"name": "Color"})
+        res = self.client.post(self.attr_url, {"name": "Color"})
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_seller_B_cannot_see_seller_A_attributes(self):
+        ProductAttribute.objects.create(product=self.product, name="Size")
+        self._auth(self.tokenB)
+        res = self.client.get(self.attr_url)
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_buyer_cannot_access_attributes(self):
+        self._auth(self.tokenBuyer)
+        res = self.client.get(self.attr_url)
+        self.assertEqual(res.status_code, status.HTTP_403_FORBIDDEN)
+
+    # ── Variant tests ────────────────────────────────────────────────────────
+
+    def test_create_variant_with_attributes(self):
+        self._auth(self.tokenA)
+        attr = ProductAttribute.objects.create(product=self.product, name="Color")
+        av_red = ProductAttributeValue.objects.create(attribute=attr, value="Red")
+        res = self.client.post(self.variant_url, {
+            "sku": "TEST-SKU-001",
+            "price": "499.00",
+            "attribute_values": [str(av_red.id)],
+        }, format="json")
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(res.data["sku"], "TEST-SKU-001")
+
+    def test_duplicate_sku_rejected(self):
+        self._auth(self.tokenA)
+        attr = ProductAttribute.objects.create(product=self.product, name="Size")
+        av_s = ProductAttributeValue.objects.create(attribute=attr, value="S")
+        av_m = ProductAttributeValue.objects.create(attribute=attr, value="M")
+        self.client.post(self.variant_url, {"sku": "DUPE-SKU", "price": "499", "attribute_values": [str(av_s.id)]}, format="json")
+        res = self.client.post(self.variant_url, {"sku": "DUPE-SKU", "price": "499", "attribute_values": [str(av_m.id)]}, format="json")
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn("sku", res.data)
+
+    def test_duplicate_combination_rejected(self):
+        self._auth(self.tokenA)
+        attr = ProductAttribute.objects.create(product=self.product, name="Color")
+        av_red = ProductAttributeValue.objects.create(attribute=attr, value="Red")
+        # Create first variant
+        self.client.post(self.variant_url, {"sku": "COMBO-SKU-001", "price": "499", "attribute_values": [str(av_red.id)]}, format="json")
+        # Create second with same attribute values
+        res = self.client.post(self.variant_url, {"sku": "COMBO-SKU-002", "price": "599", "attribute_values": [str(av_red.id)]}, format="json")
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_seller_isolation_variants(self):
+        self._auth(self.tokenB)
+        res = self.client.get(self.variant_url)
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_generate_variants_cartesian_product(self):
+        self._auth(self.tokenA)
+        attr_color = ProductAttribute.objects.create(product=self.product, name="Color")
+        attr_size = ProductAttribute.objects.create(product=self.product, name="Size")
+        av_red = ProductAttributeValue.objects.create(attribute=attr_color, value="Red")
+        av_blue = ProductAttributeValue.objects.create(attribute=attr_color, value="Blue")
+        av_s = ProductAttributeValue.objects.create(attribute=attr_size, value="S")
+        av_m = ProductAttributeValue.objects.create(attribute=attr_size, value="M")
+
+        res = self.client.post(
+            f"/api/v1/seller/products/{self.product.id}/variants/generate/",
+            {
+                "base_price": "499",
+                "sku_prefix": "KURTI",
+                "attribute_value_groups": [[str(av_red.id), str(av_blue.id)], [str(av_s.id), str(av_m.id)]],
+            },
+            format="json",
+        )
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        # 2 colors × 2 sizes = 4 variants
+        self.assertEqual(res.data["created"], 4)
+        self.assertEqual(ProductVariant.objects.filter(product=self.product).count(), 4)
+
+    def test_generate_skips_duplicate_combos(self):
+        self._auth(self.tokenA)
+        attr_color = ProductAttribute.objects.create(product=self.product, name="Fabric")
+        av_cotton = ProductAttributeValue.objects.create(attribute=attr_color, value="Cotton")
+        # Pre-create the same variant
+        existing = ProductVariant.objects.create(product=self.product, sku="PRE-COTTON", price="499")
+        existing.attribute_values.set([av_cotton])
+
+        res = self.client.post(
+            f"/api/v1/seller/products/{self.product.id}/variants/generate/",
+            {"base_price": "499", "attribute_value_groups": [[str(av_cotton.id)]]},
+            format="json",
+        )
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(res.data["created"], 0)
+        self.assertEqual(res.data["skipped"], 1)

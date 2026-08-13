@@ -7,7 +7,7 @@ from rest_framework.response import Response
 
 from apps.accounts.models import SellerProfile
 from apps.accounts.permissions import IsAdminOrSuperAdmin, IsSeller
-from apps.catalog.models import Category, Product
+from apps.catalog.models import Category, Product, ProductAttribute, ProductAttributeValue, ProductVariant
 from apps.catalog.serializers import (
     CategorySerializer,
     ProductListSerializer,
@@ -16,6 +16,10 @@ from apps.catalog.serializers import (
     AdminProductListSerializer,
     AdminProductApprovalSerializer,
     AdminProductRejectionSerializer,
+    ProductAttributeSerializer,
+    ProductAttributeValueSerializer,
+    ProductVariantSerializer,
+    ProductVariantGenerateSerializer,
 )
 
 
@@ -36,18 +40,26 @@ class ProductFilter(FilterSet):
 
 
 # ──────────────────────────────────────────────
-# CATEGORY VIEW (READ-ONLY, any authenticated user)
+# PUBLIC VIEWS
 # ──────────────────────────────────────────────
 
 class CategoryListAPIView(generics.ListAPIView):
     """
-    GET /api/v1/categories/ - List all categories (read-only, for dropdowns)
+    Public endpoint to list only active categories.
     """
-    queryset = Category.objects.all().order_by("name")
+    queryset = Category.objects.filter(is_active=True).order_by("sort_order", "name")
     serializer_class = CategorySerializer
-    permission_classes = [IsAuthenticated]
-    pagination_class = None  # Return full list for dropdown
+    permission_classes = []
+    pagination_class = None
 
+class CategoryDetailAPIView(generics.RetrieveAPIView):
+    """
+    Public endpoint to retrieve a specific active category by slug.
+    """
+    queryset = Category.objects.filter(is_active=True)
+    serializer_class = CategorySerializer
+    permission_classes = []
+    lookup_field = "slug"
 
 # ──────────────────────────────────────────────
 # SELLER PRODUCT VIEWSET
@@ -221,3 +233,215 @@ class AdminProductViewSet(viewsets.ReadOnlyModelViewSet):
             },
             status=status.HTTP_200_OK,
         )
+
+
+class AdminCategoryViewSet(viewsets.ModelViewSet):
+    """
+    Admin endpoint for managing categories.
+    Requires ADMIN or SUPER_ADMIN role.
+    """
+    queryset = Category.objects.all().order_by("sort_order", "name")
+    serializer_class = CategorySerializer
+    permission_classes = [IsAuthenticated, IsAdminOrSuperAdmin]
+    filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
+    search_fields = ["name", "description"]
+    filterset_fields = ["is_active", "parent"]
+    ordering_fields = ["name", "created_at", "sort_order"]
+
+    def destroy(self, request, *args, **kwargs):
+        from django.db.models.deletion import ProtectedError
+        try:
+            return super().destroy(request, *args, **kwargs)
+        except ProtectedError:
+            return Response(
+                {"detail": "Cannot delete this category because it contains child categories or products."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+# ──────────────────────────────────────────────
+# SELLER PRODUCT ATTRIBUTE VIEWSET
+# ──────────────────────────────────────────────
+
+class SellerProductAttributeViewSet(viewsets.ModelViewSet):
+    """
+    Manage attributes for a specific product.
+    Only the product's seller can access these.
+
+    GET    /api/v1/seller/products/{product_pk}/attributes/
+    POST   /api/v1/seller/products/{product_pk}/attributes/
+    GET    /api/v1/seller/products/{product_pk}/attributes/{id}/
+    PATCH  /api/v1/seller/products/{product_pk}/attributes/{id}/
+    DELETE /api/v1/seller/products/{product_pk}/attributes/{id}/
+    """
+    permission_classes = [IsAuthenticated, IsSeller]
+    serializer_class = ProductAttributeSerializer
+    http_method_names = ["get", "post", "patch", "delete", "head", "options"]
+
+    def _get_product(self):
+        """Return product belonging to the logged-in seller, or 404."""
+        try:
+            seller = self.request.user.seller_profile
+        except SellerProfile.DoesNotExist:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("You do not have a seller profile.")
+        from django.shortcuts import get_object_or_404
+        return get_object_or_404(Product, pk=self.kwargs["product_pk"], seller=seller)
+
+    def get_queryset(self):
+        product = self._get_product()
+        return ProductAttribute.objects.filter(product=product).prefetch_related("values")
+
+    def get_serializer_context(self):
+        ctx = super().get_serializer_context()
+        ctx["product_pk"] = self.kwargs.get("product_pk")
+        return ctx
+
+    def perform_create(self, serializer):
+        product = self._get_product()
+        serializer.save(product=product)
+
+    @action(detail=True, methods=["post"], url_path="values")
+    def add_value(self, request, product_pk=None, pk=None):
+        """
+        POST /api/v1/seller/products/{product_pk}/attributes/{id}/values/
+        Add a new value to an attribute.
+        """
+        attribute = self.get_object()
+        serializer = ProductAttributeValueSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        value_text = serializer.validated_data["value"]
+        if attribute.values.filter(value__iexact=value_text).exists():
+            return Response(
+                {"detail": f"Value '{value_text}' already exists for this attribute."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        av = attribute.values.create(value=value_text)
+        return Response(ProductAttributeValueSerializer(av).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=["delete"], url_path=r"values/(?P<value_pk>[^/.]+)")
+    def remove_value(self, request, product_pk=None, pk=None, value_pk=None):
+        """
+        DELETE /api/v1/seller/products/{product_pk}/attributes/{id}/values/{value_pk}/
+        Remove a specific value from an attribute.
+        """
+        attribute = self.get_object()
+        from django.shortcuts import get_object_or_404
+        av = get_object_or_404(ProductAttributeValue, pk=value_pk, attribute=attribute)
+        av.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+# ──────────────────────────────────────────────
+# SELLER PRODUCT VARIANT VIEWSET
+# ──────────────────────────────────────────────
+
+class SellerProductVariantViewSet(viewsets.ModelViewSet):
+    """
+    Manage variants for a specific product.
+    Only the product's seller can access these.
+
+    GET    /api/v1/seller/products/{product_pk}/variants/
+    POST   /api/v1/seller/products/{product_pk}/variants/
+    PATCH  /api/v1/seller/products/{product_pk}/variants/{id}/
+    DELETE /api/v1/seller/products/{product_pk}/variants/{id}/
+    POST   /api/v1/seller/products/{product_pk}/variants/generate/
+    """
+    permission_classes = [IsAuthenticated, IsSeller]
+    serializer_class = ProductVariantSerializer
+    http_method_names = ["get", "post", "patch", "delete", "head", "options"]
+
+    def _get_product(self):
+        try:
+            seller = self.request.user.seller_profile
+        except SellerProfile.DoesNotExist:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("You do not have a seller profile.")
+        from django.shortcuts import get_object_or_404
+        return get_object_or_404(Product, pk=self.kwargs["product_pk"], seller=seller)
+
+    def get_queryset(self):
+        product = self._get_product()
+        return ProductVariant.objects.filter(product=product).prefetch_related(
+            "attribute_values__attribute"
+        )
+
+    def perform_create(self, serializer):
+        product = self._get_product()
+        serializer.save(product=product)
+
+    @action(detail=False, methods=["post"])
+    def generate(self, request, product_pk=None):
+        """
+        POST /api/v1/seller/products/{product_pk}/variants/generate/
+        Bulk-generate variants from Cartesian product of attribute value groups.
+        """
+        import itertools, uuid as uuid_lib
+        product = self._get_product()
+        serializer = ProductVariantGenerateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        base_price = serializer.validated_data["base_price"]
+        sku_prefix = serializer.validated_data.get("sku_prefix", "SKU")
+        groups = serializer.validated_data["attribute_value_groups"]
+
+        # Resolve UUIDs to model instances and validate they belong to this product
+        resolved_groups = []
+        for group in groups:
+            values = []
+            for av_id in group:
+                try:
+                    av = ProductAttributeValue.objects.get(pk=av_id, attribute__product=product)
+                    values.append(av)
+                except ProductAttributeValue.DoesNotExist:
+                    return Response(
+                        {"detail": f"Attribute value {av_id} does not belong to this product."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+            resolved_groups.append(values)
+
+        if not resolved_groups:
+            return Response({"detail": "No attribute value groups provided."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Generate Cartesian product of all value combinations
+        combos = list(itertools.product(*resolved_groups))
+        created = []
+        skipped = []
+
+        for combo in combos:
+            av_ids = [av.id for av in combo]
+            # Build a short SKU from values
+            slug_part = "-".join(av.value[:3].upper() for av in combo)
+            sku_candidate = f"{sku_prefix}-{slug_part}-{str(uuid_lib.uuid4())[:4].upper()}"
+
+            # Check for duplicate combo
+            from django.db.models import Count
+            existing_ids = set(av_ids)
+            n = len(existing_ids)
+            duplicate = False
+            candidates = ProductVariant.objects.filter(
+                product=product,
+                attribute_values__id__in=existing_ids,
+            ).annotate(match_count=Count("attribute_values")).filter(match_count=n)
+            for candidate in candidates:
+                if set(candidate.attribute_values.values_list("id", flat=True)) == existing_ids:
+                    duplicate = True
+                    skipped.append({"combo": [str(i) for i in av_ids], "reason": "Duplicate combination"})
+                    break
+
+            if not duplicate:
+                variant = ProductVariant.objects.create(
+                    product=product,
+                    sku=sku_candidate,
+                    price=base_price,
+                    is_active=True,
+                )
+                variant.attribute_values.set(combo)
+                created.append(ProductVariantSerializer(variant).data)
+
+        return Response({
+            "created": len(created),
+            "skipped": len(skipped),
+            "variants": created,
+            "skipped_details": skipped,
+        }, status=status.HTTP_201_CREATED)

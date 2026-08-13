@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { sellerProductAPI, catalogAPI, Product, PaginatedResponse } from '../../services/api';
 import '../../styles/seller.css';
 
 const badgeClass = (val: string) => `badge badge-${val.toLowerCase()}`;
 
 const SellerProductListPage: React.FC = () => {
-  const navigate = useNavigate();
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

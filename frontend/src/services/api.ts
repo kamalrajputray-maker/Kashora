@@ -362,7 +362,7 @@ export const adminProductAPI = {
   listPending: (params?: { page?: number }) =>
     apiClient.get<PaginatedResponse<AdminProduct>>('admin/products/pending/', { params }),
 
-  list: (params?: ProductListParams) =>
+  list: (params?: any) =>
     apiClient.get<PaginatedResponse<AdminProduct>>('admin/products/', { params }),
 
   get: (id: string) =>
@@ -373,6 +373,120 @@ export const adminProductAPI = {
 
   reject: (id: string, data: { rejection_reason: string }) =>
     apiClient.post(`admin/products/${id}/reject/`, data),
+};
+
+// ========== CATEGORY APIS ==========
+
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  image: string | null;
+  parent: string | null;
+  is_active: boolean;
+  sort_order: number;
+  children: Category[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CategoryRequest {
+  name: string;
+  description?: string;
+  parent?: string | null;
+  is_active?: boolean;
+  sort_order?: number;
+}
+
+export const categoryAPI = {
+  getCategories: () => 
+    apiClient.get<Category[]>('categories/'),
+  getCategoryBySlug: (slug: string) =>
+    apiClient.get<Category>(`categories/${slug}/`),
+};
+
+export const adminCategoryAPI = {
+  getCategories: (params?: any) =>
+    apiClient.get<PaginatedResponse<Category>>('admin/categories/', { params }),
+  getCategoryById: (id: string) =>
+    apiClient.get<Category>(`admin/categories/${id}/`),
+  createCategory: (data: CategoryRequest | FormData) => {
+    const isFormData = data instanceof FormData;
+    return apiClient.post<Category>('admin/categories/', data, {
+      headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : undefined,
+    });
+  },
+  updateCategory: (id: string, data: Partial<CategoryRequest> | FormData) => {
+    const isFormData = data instanceof FormData;
+    return apiClient.patch<Category>(`admin/categories/${id}/`, data, {
+      headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : undefined,
+    });
+  },
+  deleteCategory: (id: string) =>
+    apiClient.delete(`admin/categories/${id}/`),
+};
+
+// ========== PRODUCT ATTRIBUTE & VARIANT APIS ==========
+
+export interface ProductAttributeValue {
+  id: string;
+  value: string;
+  created_at: string;
+}
+
+export interface ProductAttribute {
+  id: string;
+  name: string;
+  values: ProductAttributeValue[];
+  created_at: string;
+}
+
+export interface ProductVariant {
+  id: string;
+  product: string;
+  sku: string;
+  barcode?: string;
+  price: string;
+  compare_at_price?: string;
+  weight?: string;
+  is_active: boolean;
+  attribute_values: string[]; // array of attribute value UUIDs
+  attribute_summary: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VariantGenerateRequest {
+  base_price: string;
+  sku_prefix?: string;
+  attribute_value_groups: string[][];
+}
+
+export const sellerAttributeAPI = {
+  list: (productId: string) =>
+    apiClient.get<ProductAttribute[]>(`seller/products/${productId}/attributes/`),
+  create: (productId: string, data: { name: string }) =>
+    apiClient.post<ProductAttribute>(`seller/products/${productId}/attributes/`, data),
+  delete: (productId: string, attrId: string) =>
+    apiClient.delete(`seller/products/${productId}/attributes/${attrId}/`),
+  addValue: (productId: string, attrId: string, data: { value: string }) =>
+    apiClient.post<ProductAttributeValue>(`seller/products/${productId}/attributes/${attrId}/values/`, data),
+  removeValue: (productId: string, attrId: string, valueId: string) =>
+    apiClient.delete(`seller/products/${productId}/attributes/${attrId}/values/${valueId}/`),
+};
+
+export const sellerVariantAPI = {
+  list: (productId: string) =>
+    apiClient.get<ProductVariant[]>(`seller/products/${productId}/variants/`),
+  create: (productId: string, data: Partial<ProductVariant>) =>
+    apiClient.post<ProductVariant>(`seller/products/${productId}/variants/`, data),
+  update: (productId: string, variantId: string, data: Partial<ProductVariant>) =>
+    apiClient.patch<ProductVariant>(`seller/products/${productId}/variants/${variantId}/`, data),
+  delete: (productId: string, variantId: string) =>
+    apiClient.delete(`seller/products/${productId}/variants/${variantId}/`),
+  generate: (productId: string, data: VariantGenerateRequest) =>
+    apiClient.post(`seller/products/${productId}/variants/generate/`, data),
 };
 
 export default apiClient;

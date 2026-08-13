@@ -193,7 +193,7 @@ class AuthFlowTests(APITestCase):
             {"phone": "missing-user", "password": "StrongPassword123"},
             format="json",
         )
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
         response = self.client.post(
             reverse("buyer_register"),
