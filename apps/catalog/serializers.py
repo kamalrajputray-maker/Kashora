@@ -1,6 +1,6 @@
 from itertools import product as cartesian_product
 from rest_framework import serializers
-from apps.catalog.models import Category, Product, ProductAttribute, ProductAttributeValue, ProductVariant
+from apps.catalog.models import Category, Product, ProductAttribute, ProductAttributeValue, ProductVariant, ProductImage
 from apps.accounts.models import SellerProfile
 
 
@@ -261,4 +261,108 @@ class ProductVariantGenerateSerializer(serializers.Serializer):
             child=serializers.UUIDField()
         )
     )
+
+
+class ProductImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductImage
+        fields = ["id", "product", "image", "alt_text", "sort_order", "is_primary", "created_at"]
+        read_only_fields = ["id", "product", "created_at"]
+
+    def validate_image(self, value):
+        # Validate file size (max 5MB)
+        if value.size > 5 * 1024 * 1024:
+            raise serializers.ValidationError("Image file size must be under 5MB.")
+        
+        # Validate format
+        import os
+        ext = os.path.splitext(value.name)[1].lower()
+        if ext not in [".jpg", ".jpeg", ".png", ".webp"]:
+            raise serializers.ValidationError("Unsupported image format. Allowed formats: JPG, JPEG, PNG, WEBP.")
+        
+        return value
+
+
+class PublicProductListSerializer(serializers.ModelSerializer):
+    category_name = serializers.CharField(source="category.name", read_only=True)
+    primary_image = serializers.SerializerMethodField()
+    in_stock = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Product
+        fields = [
+            "id", "name", "slug", "brand",
+            "base_price", "compare_at_price",
+            "category", "category_name",
+            "primary_image", "in_stock",
+            "created_at",
+        ]
+
+    def get_primary_image(self, obj):
+        primary = obj.images.filter(is_primary=True).first()
+        if primary:
+            request = self.context.get("request")
+            if request:
+                return request.build_absolute_uri(primary.image.url)
+            return primary.image.url
+        first = obj.images.first()
+        if first:
+            request = self.context.get("request")
+            if request:
+                return request.build_absolute_uri(first.image.url)
+            return first.image.url
+        return None
+
+    def get_in_stock(self, obj):
+        from apps.inventory.models import Inventory
+        return Inventory.objects.filter(variant__product=obj, variant__is_active=True, available_quantity__gt=0).exists()
+
+
+class PublicProductVariantSerializer(serializers.ModelSerializer):
+    attribute_summary = serializers.CharField(read_only=True)
+    in_stock = serializers.SerializerMethodField()
+    available_quantity = serializers.IntegerField(source="inventory.available_quantity", read_only=True)
+
+    class Meta:
+        model = ProductVariant
+        fields = [
+            "id", "sku", "price", "compare_at_price", "weight", "attribute_summary", "in_stock", "available_quantity"
+        ]
+
+    def get_in_stock(self, obj):
+        try:
+            return obj.inventory.available_quantity > 0
+        except AttributeError:
+            return False
+
+
+class PublicProductDetailSerializer(serializers.ModelSerializer):
+    category_name = serializers.CharField(source="category.name", read_only=True)
+    seller_store = serializers.CharField(source="seller.store_name", read_only=True)
+    images = ProductImageSerializer(many=True, read_only=True)
+    variants = serializers.SerializerMethodField()
+    in_stock = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Product
+        fields = [
+            "id", "seller", "seller_store",
+            "category", "category_name",
+            "name", "slug", "description", "brand",
+            "base_price", "compare_at_price",
+            "tax_percentage", "shipping_charge",
+            "returnable", "return_window_days",
+            "images", "variants", "in_stock",
+            "created_at", "updated_at",
+        ]
+
+    def get_variants(self, obj):
+        active_variants = obj.variants.filter(is_active=True)
+        return PublicProductVariantSerializer(active_variants, many=True, context=self.context).data
+
+    def get_in_stock(self, obj):
+        from apps.inventory.models import Inventory
+        return Inventory.objects.filter(variant__product=obj, variant__is_active=True, available_quantity__gt=0).exists()
+
+
 

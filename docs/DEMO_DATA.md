@@ -17,6 +17,7 @@ This idempotent command generates:
 - 35 Buyers (with Addresses)
 - 25 Categories
 - 100 Products
+- 306 Product Variants (with Attributes & Values)
 
 **Reset Data**
 ```bash
@@ -50,5 +51,5 @@ Buyers are automatically generated. The first three are:
 - **Buyer 3:** `9000000202` (`buyer3@demo.local`)
 
 ## Notes on Generation
-- Currently, only the modules that are implemented as Django models are generated (Accounts, Roles, Profiles, Categories, Products).
-- Orders, Variants, Inventory, Shipping, Payments, etc., will not be generated until those models are implemented.
+- Currently, the modules that are implemented as Django models are generated (Accounts, Roles, Profiles, Categories, Products, Attributes, Values, and Product Variants).
+- Orders, Inventory, Shipping, Payments, etc., will not be generated until those models are implemented.

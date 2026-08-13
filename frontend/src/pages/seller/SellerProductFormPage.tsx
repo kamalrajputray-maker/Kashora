@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   sellerProductAPI, catalogAPI, Product,
-  sellerAttributeAPI, sellerVariantAPI,
-  ProductAttribute, ProductVariant,
+  sellerAttributeAPI, sellerVariantAPI, sellerImageAPI,
+  ProductAttribute, ProductVariant, ProductImage,
 } from '../../services/api';
 import '../../styles/seller.css';
 
@@ -101,6 +101,11 @@ const SellerProductFormPage: React.FC<{ mode?: 'create' | 'edit' }> = ({ mode = 
   const [variantApiError, setVariantApiError] = useState<string | null>(null);
   const [variantSuccess, setVariantSuccess] = useState<string | null>(null);
 
+  // Product Image states
+  const [images, setImages] = useState<ProductImage[]>([]);
+  const [imageLoading, setImageLoading] = useState(false);
+  const [imageError, setImageError] = useState<string | null>(null);
+
   // Load categories
   useEffect(() => { catalogAPI.listCategories().then(r => setCategories(r.data)); }, []);
 
@@ -119,14 +124,26 @@ const SellerProductFormPage: React.FC<{ mode?: 'create' | 'edit' }> = ({ mode = 
     }
   }, [isEdit, id]);
 
-  // Load attributes & variants when we have a product id
+  const loadImages = useCallback(async (pid: string) => {
+    try {
+      const res = await sellerImageAPI.list(pid);
+      setImages(res.data);
+    } catch { /* ignore */ }
+  }, []);
+
+  // Load attributes, variants, and images when we have a product id
   const loadAttributesAndVariants = useCallback(async (pid: string) => {
     setAttrLoading(true);
     setVariantLoading(true);
     try {
-      const [attrRes, varRes] = await Promise.all([sellerAttributeAPI.list(pid), sellerVariantAPI.list(pid)]);
+      const [attrRes, varRes, imgRes] = await Promise.all([
+        sellerAttributeAPI.list(pid),
+        sellerVariantAPI.list(pid),
+        sellerImageAPI.list(pid)
+      ]);
       setAttributes(attrRes.data);
       setVariants(varRes.data);
+      setImages(imgRes.data);
     } catch { /* silently ignore */ } finally {
       setAttrLoading(false);
       setVariantLoading(false);
@@ -134,6 +151,56 @@ const SellerProductFormPage: React.FC<{ mode?: 'create' | 'edit' }> = ({ mode = 
   }, []);
 
   useEffect(() => { if (savedProductId) loadAttributesAndVariants(savedProductId); }, [savedProductId, loadAttributesAndVariants]);
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!savedProductId || !files || files.length === 0) return;
+    setImageLoading(true);
+    setImageError(null);
+    try {
+      const formData = new FormData();
+      formData.append('image', files[0]);
+      formData.append('alt_text', form.name);
+      formData.append('sort_order', String(images.length));
+      await sellerImageAPI.upload(savedProductId, formData);
+      await loadImages(savedProductId);
+    } catch (err: any) {
+      setImageError(err.response?.data?.image?.[0] || err.response?.data?.detail || 'Failed to upload image.');
+    } finally {
+      setImageLoading(false);
+    }
+  };
+
+  const handleMakePrimary = async (imageId: string) => {
+    if (!savedProductId) return;
+    try {
+      await sellerImageAPI.update(savedProductId, imageId, { is_primary: true });
+      await loadImages(savedProductId);
+    } catch (err) {
+      setImageError('Failed to change primary image.');
+    }
+  };
+
+  const handleUpdateSortOrder = async (imageId: string, newOrder: number) => {
+    if (!savedProductId) return;
+    try {
+      await sellerImageAPI.update(savedProductId, imageId, { sort_order: newOrder });
+      await loadImages(savedProductId);
+    } catch (err) {
+      setImageError('Failed to update sort order.');
+    }
+  };
+
+  const handleDeleteImage = async (imageId: string) => {
+    if (!savedProductId || !window.confirm('Delete this image?')) return;
+    try {
+      await sellerImageAPI.delete(savedProductId, imageId);
+      await loadImages(savedProductId);
+    } catch (err) {
+      setImageError('Failed to delete image.');
+    }
+  };
+
 
   // ─── Product form handlers ───────────────────────────────────────────────
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -534,6 +601,64 @@ const SellerProductFormPage: React.FC<{ mode?: 'create' | 'edit' }> = ({ mode = 
                 </button>
               )}
             </div>
+
+            {/* Product Images Card */}
+            {savedProductId ? (
+              <div style={S.card}>
+                <p style={S.sectionTitle}>🖼️ Product Images</p>
+                {imageError && <div style={S.error}>{imageError}</div>}
+                
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem', marginBottom: '1rem' }}>
+                  {images.map(img => (
+                    <div key={img.id} style={{ border: img.is_primary ? '2px solid #7c3aed' : '1px solid #cbd5e1', borderRadius: '8px', overflow: 'hidden', background: '#fafafa', position: 'relative' }}>
+                      <img src={img.image} alt={img.alt_text} style={{ width: '100%', height: '80px', objectFit: 'cover' }} />
+                      
+                      {img.is_primary && (
+                        <span style={{ position: 'absolute', top: '4px', left: '4px', background: '#7c3aed', color: '#fff', fontSize: '0.65rem', fontWeight: '700', padding: '2px 6px', borderRadius: '4px' }}>
+                          Primary
+                        </span>
+                      )}
+
+                      <div style={{ padding: '0.3rem', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.2rem' }}>
+                          <button type="button" style={{ ...S.secondaryBtn, padding: '2px 4px', fontSize: '0.68rem', flex: 1 }} onClick={() => handleMakePrimary(img.id)} disabled={img.is_primary}>
+                            Primary
+                          </button>
+                          <button type="button" style={{ ...S.dangerBtn, padding: '2px 4px', fontSize: '0.68rem' }} onClick={() => handleDeleteImage(img.id)}>
+                            Delete
+                          </button>
+                        </div>
+                        
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.2rem' }}>
+                          <span style={{ fontSize: '0.68rem', color: '#64748b' }}>Order:</span>
+                          <input
+                            type="number"
+                            style={{ ...S.smallInput, width: '40px', padding: '1px 3px', fontSize: '0.7rem' }}
+                            value={img.sort_order}
+                            onChange={e => handleUpdateSortOrder(img.id, Number(e.target.value))}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div style={{ border: '2px dashed #cbd5e1', borderRadius: '8px', padding: '1rem', textAlign: 'center', cursor: 'pointer', background: '#f8fafc' }}>
+                  <label style={{ cursor: 'pointer', display: 'block' }}>
+                    <span style={{ fontSize: '1.25rem', display: 'block', marginBottom: '0.25rem' }}>📤</span>
+                    <span style={{ fontSize: '0.78rem', fontWeight: '600', color: '#475569' }}>Upload Image</span>
+                    <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageUpload} disabled={imageLoading} />
+                  </label>
+                  {imageLoading && <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.25rem' }}>Uploading...</p>}
+                </div>
+              </div>
+            ) : (
+              <div style={S.card}>
+                <p style={S.sectionTitle}>🖼️ Product Images</p>
+                <p style={{ fontSize: '0.82rem', color: '#64748b' }}>Save the product first to enable image uploads.</p>
+              </div>
+            )}
+
 
             {/* Tips */}
             <div style={{ ...S.card, background: 'linear-gradient(135deg, #ede9fe, #e0e7ff)' }}>

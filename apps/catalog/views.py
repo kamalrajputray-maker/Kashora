@@ -7,7 +7,7 @@ from rest_framework.response import Response
 
 from apps.accounts.models import SellerProfile
 from apps.accounts.permissions import IsAdminOrSuperAdmin, IsSeller
-from apps.catalog.models import Category, Product, ProductAttribute, ProductAttributeValue, ProductVariant
+from apps.catalog.models import Category, Product, ProductAttribute, ProductAttributeValue, ProductVariant, ProductImage
 from apps.catalog.serializers import (
     CategorySerializer,
     ProductListSerializer,
@@ -20,6 +20,9 @@ from apps.catalog.serializers import (
     ProductAttributeValueSerializer,
     ProductVariantSerializer,
     ProductVariantGenerateSerializer,
+    ProductImageSerializer,
+    PublicProductListSerializer,
+    PublicProductDetailSerializer,
 )
 
 
@@ -276,6 +279,7 @@ class SellerProductAttributeViewSet(viewsets.ModelViewSet):
     """
     permission_classes = [IsAuthenticated, IsSeller]
     serializer_class = ProductAttributeSerializer
+    pagination_class = None
     http_method_names = ["get", "post", "patch", "delete", "head", "options"]
 
     def _get_product(self):
@@ -349,6 +353,7 @@ class SellerProductVariantViewSet(viewsets.ModelViewSet):
     """
     permission_classes = [IsAuthenticated, IsSeller]
     serializer_class = ProductVariantSerializer
+    pagination_class = None
     http_method_names = ["get", "post", "patch", "delete", "head", "options"]
 
     def _get_product(self):
@@ -445,3 +450,83 @@ class SellerProductVariantViewSet(viewsets.ModelViewSet):
             "variants": created,
             "skipped_details": skipped,
         }, status=status.HTTP_201_CREATED)
+
+
+class SellerProductImageViewSet(viewsets.ModelViewSet):
+    """
+    Manage images for a specific product.
+    Only the product's seller can access these.
+    """
+    permission_classes = [IsAuthenticated, IsSeller]
+    serializer_class = ProductImageSerializer
+    pagination_class = None
+    http_method_names = ["get", "post", "patch", "delete", "head", "options"]
+
+    def _get_product(self):
+        try:
+            seller = self.request.user.seller_profile
+        except SellerProfile.DoesNotExist:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("You do not have a seller profile.")
+        from django.shortcuts import get_object_or_404
+        return get_object_or_404(Product, pk=self.kwargs["product_pk"], seller=seller)
+
+    def get_queryset(self):
+        product = self._get_product()
+        return ProductImage.objects.filter(product=product).order_by("sort_order", "created_at")
+
+    def perform_create(self, serializer):
+        product = self._get_product()
+        serializer.save(product=product)
+
+
+class PublicProductFilter(FilterSet):
+    category = UUIDFilter(field_name="category__id")
+    category_slug = CharFilter(field_name="category__slug")
+    brand = CharFilter(field_name="brand", lookup_expr="iexact")
+    min_price = NumberFilter(field_name="base_price", lookup_expr="gte")
+    max_price = NumberFilter(field_name="base_price", lookup_expr="lte")
+    seller = UUIDFilter(field_name="seller__id")
+    availability = CharFilter(method="filter_availability")
+
+    class Meta:
+        model = Product
+        fields = ["category", "category_slug", "brand", "min_price", "max_price", "seller", "availability"]
+
+    def filter_availability(self, queryset, name, value):
+        if value == "in_stock":
+            return queryset.filter(variants__inventory__available_quantity__gt=0, variants__is_active=True).distinct()
+        elif value == "out_of_stock":
+            in_stock_products = Product.objects.filter(variants__inventory__available_quantity__gt=0, variants__is_active=True)
+            return queryset.exclude(id__in=in_stock_products).distinct()
+        return queryset
+
+
+class PublicProductViewSet(viewsets.ReadOnlyModelViewSet):
+    """
+    Public ViewSet for product listings.
+    GET /api/v1/products/
+    GET /api/v1/products/{slug}/
+    """
+    permission_classes = []
+    serializer_class = PublicProductListSerializer
+    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
+    filterset_class = PublicProductFilter
+    search_fields = ["name", "brand", "description", "category__name", "seller__store_name"]
+    lookup_field = "slug"
+    ordering_fields = ["created_at", "base_price", "rating", "popularity", "sales_count"]
+
+    def get_queryset(self):
+        return Product.objects.filter(
+            status="ACTIVE",
+            approval_status="APPROVED",
+            seller__status="APPROVED",
+            variants__is_active=True
+        ).prefetch_related("images", "variants").distinct()
+
+    def get_serializer_class(self):
+        if self.action == "retrieve":
+            return PublicProductDetailSerializer
+        return PublicProductListSerializer
+
+

@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
@@ -14,6 +14,8 @@ import BuyerLoginPage from './pages/buyer/BuyerLoginPage';
 
 // Buyer Pages
 import BuyerDashboardPage from './pages/buyer/BuyerDashboardPage';
+import ProductListPage from './pages/buyer/ProductListPage';
+import ProductDetailPage from './pages/buyer/ProductDetailPage';
 
 // Seller Pages
 import SellerDashboardPage from './pages/seller/SellerDashboardPage';
@@ -21,6 +23,8 @@ import SellerProfilePage from './pages/seller/SellerProfilePage';
 import SellerProductListPage from './pages/seller/SellerProductListPage';
 import SellerProductDetailPage from './pages/seller/SellerProductDetailPage';
 import { SellerProductCreatePage, SellerProductEditPage } from './pages/seller/SellerProductFormPage';
+import InventoryListPage from './pages/seller/InventoryListPage';
+import InventoryDetailPage from './pages/seller/InventoryDetailPage';
 
 // Admin Pages
 import AdminSellerListPage from './pages/admin/AdminSellerListPage';
@@ -32,6 +36,11 @@ import AdminCategoryFormPage from './pages/admin/categories/AdminCategoryFormPag
 import NotFoundPage from './pages/NotFoundPage';
 
 const ADMIN_ROLES = ['ADMIN', 'SUPER_ADMIN'];
+
+const CategoryRedirect: React.FC = () => {
+  const { slug } = useParams<{ slug: string }>();
+  return <Navigate to={`/products?category=${slug}`} replace />;
+};
 
 const App: React.FC = () => {
   return (
@@ -46,6 +55,11 @@ const App: React.FC = () => {
               <Route path="/seller/login" element={<SellerLoginPage />} />
               <Route path="/seller/register" element={<SellerRegisterPage />} />
               <Route path="/admin/login" element={<AdminLoginPage />} />
+
+              {/* ── Public Catalog Routes ── */}
+              <Route path="/products" element={<ProductListPage />} />
+              <Route path="/products/:slug" element={<ProductDetailPage />} />
+              <Route path="/categories/:slug" element={<CategoryRedirect />} />
 
               {/* ── Buyer Routes ── */}
               <Route
@@ -75,6 +89,8 @@ const App: React.FC = () => {
                           <Route path="products/create" element={<SellerProductCreatePage />} />
                           <Route path="products/:id" element={<SellerProductDetailPage />} />
                           <Route path="products/:id/edit" element={<SellerProductEditPage />} />
+                          <Route path="inventory" element={<InventoryListPage />} />
+                          <Route path="inventory/:id" element={<InventoryDetailPage />} />
                           <Route path="*" element={<Navigate to="/seller/dashboard" />} />
                         </Routes>
                       </div>

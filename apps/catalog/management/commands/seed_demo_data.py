@@ -15,7 +15,13 @@ from apps.accounts.models import (
     AdminProfile,
     Address,
 )
-from apps.catalog.models import Category, Product
+from apps.catalog.models import (
+    Category,
+    Product,
+    ProductAttribute,
+    ProductAttributeValue,
+    ProductVariant,
+)
 
 
 class Command(BaseCommand):
@@ -175,19 +181,20 @@ class Command(BaseCommand):
             if created:
                 cat_count += 1
 
-        # 6. PRODUCTS
+        # 6. PRODUCTS, ATTRIBUTES, AND VARIANTS
         product_count = 0
+        variant_count = 0
         active_sellers = [sp for sp in seller_profiles if sp.status == "APPROVED"]
         
         brands = ["UrbanVibe", "StyleNest", "HomeEase", "Trendora", "DailyCraft", "SmartLiving", "GlowPure", "ComfortLine", "KidsJoy", "TechMate"]
 
-        # 100 products logic
         for i in range(1, 101):
             name = f"Demo Product {i} - Premium Quality"
             slug = f"demo-product-{i}-premium"
             
-            # Use get_or_create to make it idempotent
-            if not Product.objects.filter(slug=slug).exists():
+            # Use filter check for idempotency
+            product = Product.objects.filter(slug=slug).first()
+            if not product:
                 cat = random.choice(categories)
                 seller = random.choice(active_sellers)
                 brand = random.choice(brands)
@@ -195,7 +202,7 @@ class Command(BaseCommand):
                 base_price = Decimal(random.randint(299, 1999))
                 compare_at_price = base_price + Decimal(random.randint(100, 500))
                 
-                Product.objects.create(
+                product = Product.objects.create(
                     seller=seller,
                     category=cat,
                     name=name,
@@ -212,6 +219,80 @@ class Command(BaseCommand):
                     approval_status="APPROVED"
                 )
                 product_count += 1
+
+            # Seed Attributes and Variants for this product if they don't exist yet
+            if product.variants.count() == 0:
+                is_clothing = any(k in product.category.name.lower() for k in ["clothing", "ethnic", "western", "kurtis", "sarees", "t-shirts", "shirts", "trousers"])
+                is_footwear = any(k in product.category.name.lower() for k in ["footwear", "shoes", "sneakers"])
+                
+                if is_clothing:
+                    # Size Attribute
+                    size_attr, _ = ProductAttribute.objects.get_or_create(product=product, name="Size")
+                    sizes = ["S", "M", "L", "XL"]
+                    size_vals = [ProductAttributeValue.objects.get_or_create(attribute=size_attr, value=s)[0] for s in sizes]
+                    
+                    # Color Attribute
+                    color_attr, _ = ProductAttribute.objects.get_or_create(product=product, name="Color")
+                    colors = ["Black", "Blue", "Pink", "Maroon"]
+                    color_vals = [ProductAttributeValue.objects.get_or_create(attribute=color_attr, value=c)[0] for c in colors]
+                    
+                    # Generate Variants (2 sizes x 2 colors = 4 variants)
+                    chosen_sizes = random.sample(size_vals, 2)
+                    chosen_colors = random.sample(color_vals, 2)
+                    for s_val in chosen_sizes:
+                        for c_val in chosen_colors:
+                            sku = f"{product.seller.store_name[:3].upper()}-{product.brand[:3].upper()}-CL-{str(uuid.uuid4())[:8].upper()}"
+                            variant = ProductVariant.objects.create(
+                                product=product,
+                                sku=sku,
+                                price=product.base_price,
+                                compare_at_price=product.compare_at_price,
+                                is_active=True
+                            )
+                            variant.attribute_values.set([s_val, c_val])
+                            variant_count += 1
+                elif is_footwear:
+                    size_attr, _ = ProductAttribute.objects.get_or_create(product=product, name="Size")
+                    sizes = ["7", "8", "9", "10"]
+                    size_vals = [ProductAttributeValue.objects.get_or_create(attribute=size_attr, value=s)[0] for s in sizes]
+                    
+                    color_attr, _ = ProductAttribute.objects.get_or_create(product=product, name="Color")
+                    colors = ["Black", "Brown", "Grey"]
+                    color_vals = [ProductAttributeValue.objects.get_or_create(attribute=color_attr, value=c)[0] for c in colors]
+                    
+                    chosen_sizes = random.sample(size_vals, 2)
+                    chosen_colors = random.sample(color_vals, 2)
+                    for s_val in chosen_sizes:
+                        for c_val in chosen_colors:
+                            sku = f"{product.seller.store_name[:3].upper()}-{product.brand[:3].upper()}-FW-{str(uuid.uuid4())[:8].upper()}"
+                            variant = ProductVariant.objects.create(
+                                product=product,
+                                sku=sku,
+                                price=product.base_price + Decimal("50.00"),
+                                compare_at_price=product.compare_at_price + Decimal("50.00"),
+                                is_active=True
+                            )
+                            variant.attribute_values.set([s_val, c_val])
+                            variant_count += 1
+                else:
+                    # General item with simple Variant style
+                    style_attr, _ = ProductAttribute.objects.get_or_create(product=product, name="Style")
+                    styles = ["Standard", "Premium"]
+                    style_vals = [ProductAttributeValue.objects.get_or_create(attribute=style_attr, value=st)[0] for st in styles]
+                    
+                    for st_val in style_vals:
+                        sku = f"{product.seller.store_name[:3].upper()}-{product.brand[:3].upper()}-GN-{str(uuid.uuid4())[:8].upper()}"
+                        variant = ProductVariant.objects.create(
+                            product=product,
+                            sku=sku,
+                            price=product.base_price if st_val.value == "Standard" else product.base_price + Decimal("150.00"),
+                            compare_at_price=product.compare_at_price if st_val.value == "Standard" else product.compare_at_price + Decimal("150.00"),
+                            is_active=True
+                        )
+                        variant.attribute_values.set([st_val])
+                        variant_count += 1
+            else:
+                variant_count += product.variants.count()
 
         self.stdout.write("\n========================================")
         self.stdout.write("DEMO DATA CREATED")
@@ -233,7 +314,7 @@ class Command(BaseCommand):
         
         self.stdout.write("Commerce")
         self.stdout.write("----------------")
-        self.stdout.write("Variants:          N/A (Not implemented)")
+        self.stdout.write(f"Variants:          {variant_count}")
         self.stdout.write("Inventory:         N/A (Not implemented)")
         self.stdout.write("Orders:            N/A (Not implemented)")
         self.stdout.write("Reviews:           N/A (Not implemented)")

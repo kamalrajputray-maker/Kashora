@@ -13,6 +13,7 @@ Tests cover:
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
 from django.urls import reverse
+from decimal import Decimal
 from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
@@ -655,3 +656,272 @@ class ProductVariantTests(APITestCase):
         self.assertEqual(res.status_code, status.HTTP_201_CREATED)
         self.assertEqual(res.data["created"], 0)
         self.assertEqual(res.data["skipped"], 1)
+
+
+class ProductImageTests(APITestCase):
+    """Tests for Product Image Uploads & Management."""
+
+    def setUp(self):
+        # Create users
+        from apps.accounts.models import Role, UserRole, SellerProfile
+        self.sellerA_user, _ = User.objects.get_or_create(phone="9100000001", defaults={"email": "sellerA@demo.local"})
+        self.sellerA_user.set_password("Demo@1234")
+        self.sellerA_user.save()
+        role_seller, _ = Role.objects.get_or_create(name="SELLER")
+        UserRole.objects.get_or_create(user=self.sellerA_user, role=role_seller, is_primary=True)
+        self.sellerA_profile, _ = SellerProfile.objects.get_or_create(
+            user=self.sellerA_user,
+            defaults={"store_name": "Seller A Store", "pan_number": "ABCDE1234A", "gst_number": "27ABCDE1234A1Z5"}
+        )
+
+        self.sellerB_user, _ = User.objects.get_or_create(phone="9100000002", defaults={"email": "sellerB@demo.local"})
+        self.sellerB_user.set_password("Demo@1234")
+        self.sellerB_user.save()
+        UserRole.objects.get_or_create(user=self.sellerB_user, role=role_seller, is_primary=True)
+        self.sellerB_profile, _ = SellerProfile.objects.get_or_create(
+            user=self.sellerB_user,
+            defaults={"store_name": "Seller B Store", "pan_number": "FGHIJ5678B", "gst_number": "27FGHIJ5678B1Z5"}
+        )
+
+        self.category = Category.objects.create(name="Image Test Category", slug="image-test-cat")
+        self.product = Product.objects.create(
+            seller=self.sellerA_profile,
+            category=self.category,
+            name="Test Kurti",
+            slug="test-kurti-image",
+            description="A kurti.",
+            brand="BIBA",
+            base_price="499.00",
+            tax_percentage="5",
+            shipping_charge="0",
+        )
+
+        resp = self.client.post("/api/v1/auth/login/", {"phone": "9100000001", "password": "Demo@1234"})
+        self.tokenA = resp.data["access"]
+        resp = self.client.post("/api/v1/auth/login/", {"phone": "9100000002", "password": "Demo@1234"})
+        self.tokenB = resp.data["access"]
+
+        self.image_url = f"/api/v1/seller/products/{self.product.id}/images/"
+
+    def _auth(self, token):
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {token}")
+
+    def test_seller_can_upload_product_image(self):
+        self._auth(self.tokenA)
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        # 1x1 black gif
+        small_gif = (
+            b'\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00'
+            b'\xff\xff\xff\x21\xf9\x04\x01\x00\x00\x00\x00\x2c\x00\x00\x00\x00'
+            b'\x01\x00\x01\x00\x00\x02\x02\x44\x01\x00\x3b'
+        )
+        uploaded_image = SimpleUploadedFile("small.png", small_gif, content_type="image/png")
+        
+        res = self.client.post(self.image_url, {"image": uploaded_image, "alt_text": "kurti look"}, format="multipart")
+        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(self.product.images.count(), 1)
+        self.assertTrue(self.product.images.first().is_primary)
+
+    def test_seller_cannot_upload_invalid_file_format(self):
+        self._auth(self.tokenA)
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        bad_file = SimpleUploadedFile("bad.txt", b"not-an-image-binary", content_type="text/plain")
+        res = self.client.post(self.image_url, {"image": bad_file}, format="multipart")
+        self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_seller_isolation_on_image_uploads(self):
+        self._auth(self.tokenB)
+        from django.core.files.uploadedfile import SimpleUploadedFile
+        small_gif = (
+            b'\x47\x49\x46\x38\x39\x61\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00'
+            b'\xff\xff\xff\x21\xf9\x04\x01\x00\x00\x00\x00\x2c\x00\x00\x00\x00'
+            b'\x01\x00\x01\x00\x00\x02\x02\x44\x01\x00\x3b'
+        )
+        uploaded_image = SimpleUploadedFile("small.png", small_gif, content_type="image/png")
+        
+        res = self.client.post(self.image_url, {"image": uploaded_image}, format="multipart")
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_primary_image_assignment_rules(self):
+        self._auth(self.tokenA)
+        from apps.catalog.models import ProductImage
+        img1 = ProductImage.objects.create(product=self.product, image="products/img1.png", is_primary=False)
+        self.assertTrue(img1.is_primary)
+
+        img2 = ProductImage.objects.create(product=self.product, image="products/img2.png", is_primary=True)
+        self.assertTrue(img2.is_primary)
+        
+        img1.refresh_from_db()
+        self.assertFalse(img1.is_primary)
+
+    def test_delete_primary_image_reassigns_primary(self):
+        self._auth(self.tokenA)
+        from apps.catalog.models import ProductImage
+        img1 = ProductImage.objects.create(product=self.product, image="products/img1.png", is_primary=True)
+        img2 = ProductImage.objects.create(product=self.product, image="products/img2.png", is_primary=False)
+        
+        self.assertTrue(img1.is_primary)
+        self.assertFalse(img2.is_primary)
+
+        img1.delete()
+        
+        img2.refresh_from_db()
+        self.assertTrue(img2.is_primary)
+
+
+class PublicProductCatalogTests(APITestCase):
+    """Tests public product listing queries, search filters, sorting, and visibility rules."""
+
+    def setUp(self):
+        from apps.accounts.models import Role, UserRole, SellerProfile
+        
+        # Approved Seller
+        self.sellerA_user, _ = User.objects.get_or_create(phone="9300000001", defaults={"email": "sellerA@demo.local"})
+        self.sellerA_user.set_password("Demo@1234")
+        self.sellerA_user.save()
+        role_seller, _ = Role.objects.get_or_create(name="SELLER")
+        UserRole.objects.get_or_create(user=self.sellerA_user, role=role_seller, is_primary=True)
+        self.sellerA_profile, _ = SellerProfile.objects.get_or_create(
+            user=self.sellerA_user,
+            defaults={"store_name": "Seller A Store", "status": "APPROVED", "pan_number": "ABCDE1234A", "gst_number": "27ABCDE1234A1Z5"}
+        )
+
+        # Suspended/Pending Seller
+        self.sellerB_user, _ = User.objects.get_or_create(phone="9300000002", defaults={"email": "sellerB@demo.local"})
+        self.sellerB_user.set_password("Demo@1234")
+        self.sellerB_user.save()
+        UserRole.objects.get_or_create(user=self.sellerB_user, role=role_seller, is_primary=True)
+        self.sellerB_profile, _ = SellerProfile.objects.get_or_create(
+            user=self.sellerB_user,
+            defaults={"store_name": "Seller B Store", "status": "PENDING", "pan_number": "FGHIJ5678B", "gst_number": "27FGHIJ5678B1Z5"}
+        )
+
+        self.category = Category.objects.create(name="Test Category", slug="test-cat")
+
+        # Visible Product
+        self.prod_visible = Product.objects.create(
+            seller=self.sellerA_profile,
+            category=self.category,
+            name="Visible Premium T-Shirt",
+            slug="visible-premium-tshirt",
+            brand="TrendVibe",
+            base_price=Decimal("499.00"),
+            tax_percentage=Decimal("12.00"),
+            shipping_charge=Decimal("40.00"),
+            status="ACTIVE",
+            approval_status="APPROVED"
+        )
+        ProductVariant.objects.create(product=self.prod_visible, sku="SHIRT-VIS-M", price=Decimal("499.00"), is_active=True)
+
+        # Invisible: Draft status
+        self.prod_draft = Product.objects.create(
+            seller=self.sellerA_profile,
+            category=self.category,
+            name="Draft T-Shirt",
+            slug="draft-tshirt",
+            brand="TrendVibe",
+            base_price=Decimal("299.00"),
+            tax_percentage=Decimal("12.00"),
+            shipping_charge=Decimal("40.00"),
+            status="DRAFT",
+            approval_status="APPROVED"
+        )
+        ProductVariant.objects.create(product=self.prod_draft, sku="SHIRT-DRAFT-M", price=Decimal("299.00"), is_active=True)
+
+        # Invisible: Pending approval status
+        self.prod_pending = Product.objects.create(
+            seller=self.sellerA_profile,
+            category=self.category,
+            name="Pending T-Shirt",
+            slug="pending-tshirt",
+            brand="TrendVibe",
+            base_price=Decimal("399.00"),
+            tax_percentage=Decimal("12.00"),
+            shipping_charge=Decimal("40.00"),
+            status="ACTIVE",
+            approval_status="PENDING"
+        )
+        ProductVariant.objects.create(product=self.prod_pending, sku="SHIRT-PEND-M", price=Decimal("399.00"), is_active=True)
+
+        # Invisible: Seller is pending approval
+        self.prod_bad_seller = Product.objects.create(
+            seller=self.sellerB_profile,
+            category=self.category,
+            name="Bad Seller T-Shirt",
+            slug="bad-seller-tshirt",
+            brand="TrendVibe",
+            base_price=Decimal("199.00"),
+            tax_percentage=Decimal("12.00"),
+            shipping_charge=Decimal("40.00"),
+            status="ACTIVE",
+            approval_status="APPROVED"
+        )
+        ProductVariant.objects.create(product=self.prod_bad_seller, sku="SHIRT-BAD-M", price=Decimal("199.00"), is_active=True)
+
+        # Invisible: No active variants
+        self.prod_no_variants = Product.objects.create(
+            seller=self.sellerA_profile,
+            category=self.category,
+            name="No Variant T-Shirt",
+            slug="no-variant-tshirt",
+            brand="TrendVibe",
+            base_price=Decimal("699.00"),
+            tax_percentage=Decimal("12.00"),
+            shipping_charge=Decimal("40.00"),
+            status="ACTIVE",
+            approval_status="APPROVED"
+        )
+        ProductVariant.objects.create(product=self.prod_no_variants, sku="SHIRT-NONE-M", price=Decimal("699.00"), is_active=False)
+
+    def test_public_product_list_visibility_rules(self):
+        res = self.client.get("/api/v1/products/")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        # Should only list the visible product (1 item)
+        self.assertEqual(res.data["count"], 1)
+        self.assertEqual(res.data["results"][0]["id"], str(self.prod_visible.id))
+
+    def test_public_product_retrieve(self):
+        # Retrieve visible product should work
+        res = self.client.get(f"/api/v1/products/{self.prod_visible.slug}/")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data["name"], "Visible Premium T-Shirt")
+
+        # Retrieve draft product should fail/404
+        res = self.client.get(f"/api/v1/products/{self.prod_draft.slug}/")
+        self.assertEqual(res.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_search_and_sorting(self):
+        # Create second visible product for sorting tests
+        prod_visible_2 = Product.objects.create(
+            seller=self.sellerA_profile,
+            category=self.category,
+            name="Another Visible Kurti",
+            slug="another-visible-kurti",
+            brand="StyleVibe",
+            base_price=Decimal("999.00"),
+            tax_percentage=Decimal("12.00"),
+            shipping_charge=Decimal("40.00"),
+            status="ACTIVE",
+            approval_status="APPROVED"
+        )
+        ProductVariant.objects.create(product=prod_visible_2, sku="KURTI-VIS-M", price=Decimal("999.00"), is_active=True)
+
+        # Test search query
+        res = self.client.get("/api/v1/products/?search=Kurti")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data["count"], 1)
+        self.assertEqual(res.data["results"][0]["name"], "Another Visible Kurti")
+
+        # Test sorting low to high
+        res = self.client.get("/api/v1/products/?ordering=base_price")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data["results"][0]["base_price"], "499.00")
+        self.assertEqual(res.data["results"][1]["base_price"], "999.00")
+
+        # Test sorting high to low
+        res = self.client.get("/api/v1/products/?ordering=-base_price")
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+        self.assertEqual(res.data["results"][0]["base_price"], "999.00")
+        self.assertEqual(res.data["results"][1]["base_price"], "499.00")
+
+

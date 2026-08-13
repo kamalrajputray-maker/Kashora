@@ -10,10 +10,13 @@ from apps.catalog.views import (
     AdminCategoryViewSet,
     SellerProductAttributeViewSet,
     SellerProductVariantViewSet,
+    SellerProductImageViewSet,
+    PublicProductViewSet,
 )
 
 # Root router
 router = DefaultRouter()
+router.register(r"products", PublicProductViewSet, basename="public_product")
 router.register(r"seller/products", SellerProductViewSet, basename="seller_product")
 router.register(r"admin/products", AdminProductViewSet, basename="admin_product")
 router.register(r"admin/categories", AdminCategoryViewSet, basename="admin_category")
@@ -22,6 +25,7 @@ router.register(r"admin/categories", AdminCategoryViewSet, basename="admin_categ
 products_router = nested_routers.NestedDefaultRouter(router, r"seller/products", lookup="product")
 products_router.register(r"attributes", SellerProductAttributeViewSet, basename="seller_product_attribute")
 products_router.register(r"variants", SellerProductVariantViewSet, basename="seller_product_variant")
+products_router.register(r"images", SellerProductImageViewSet, basename="seller_product_image")
 
 urlpatterns = [
     path("categories/", CategoryListAPIView.as_view(), name="category_list"),

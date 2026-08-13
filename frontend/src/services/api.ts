@@ -406,6 +406,60 @@ export const categoryAPI = {
     apiClient.get<Category>(`categories/${slug}/`),
 };
 
+export interface PublicProduct {
+  id: string;
+  name: string;
+  slug: string;
+  brand: string;
+  base_price: string;
+  compare_at_price: string | null;
+  category: string;
+  category_name: string;
+  primary_image: string | null;
+  in_stock: boolean;
+  created_at: string;
+}
+
+export interface PublicProductDetail {
+  id: string;
+  seller: string;
+  seller_store: string;
+  category: string;
+  category_name: string;
+  name: string;
+  slug: string;
+  description: string;
+  brand: string;
+  base_price: string;
+  compare_at_price: string | null;
+  tax_percentage: string;
+  shipping_charge: string;
+  returnable: boolean;
+  return_window_days: number;
+  images: ProductImage[];
+  variants: {
+    id: string;
+    sku: string;
+    price: string;
+    compare_at_price: string | null;
+    weight: string | null;
+    attribute_summary: string;
+    in_stock: boolean;
+    available_quantity: number;
+  }[];
+  in_stock: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export const publicProductAPI = {
+  list: (params?: any) =>
+    apiClient.get<PaginatedResponse<PublicProduct>>('products/', { params }),
+  get: (slug: string) =>
+    apiClient.get<PublicProductDetail>(`products/${slug}/`),
+};
+
+
 export const adminCategoryAPI = {
   getCategories: (params?: any) =>
     apiClient.get<PaginatedResponse<Category>>('admin/categories/', { params }),
@@ -487,6 +541,69 @@ export const sellerVariantAPI = {
     apiClient.delete(`seller/products/${productId}/variants/${variantId}/`),
   generate: (productId: string, data: VariantGenerateRequest) =>
     apiClient.post(`seller/products/${productId}/variants/generate/`, data),
+};
+
+export interface ProductImage {
+  id: string;
+  product: string;
+  image: string;
+  alt_text: string;
+  sort_order: number;
+  is_primary: boolean;
+  created_at: string;
+}
+
+export const sellerImageAPI = {
+  list: (productId: string) =>
+    apiClient.get<ProductImage[]>(`seller/products/${productId}/images/`),
+  upload: (productId: string, formData: FormData) =>
+    apiClient.post<ProductImage>(`seller/products/${productId}/images/`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    }),
+  update: (productId: string, imageId: string, data: Partial<ProductImage>) =>
+    apiClient.patch<ProductImage>(`seller/products/${productId}/images/${imageId}/`, data),
+  delete: (productId: string, imageId: string) =>
+    apiClient.delete(`seller/products/${productId}/images/${imageId}/`),
+};
+
+export interface Inventory {
+  id: string;
+  variant: string;
+  variant_sku: string;
+  product_name: string;
+  attribute_summary: string;
+  available_quantity: number;
+  reserved_quantity: number;
+  sold_quantity: number;
+  low_stock_threshold: number;
+  status: 'IN_STOCK' | 'LOW_STOCK' | 'OUT_OF_STOCK';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InventoryTransaction {
+  id: string;
+  inventory: string;
+  transaction_type: 'STOCK_IN' | 'STOCK_OUT' | 'RESERVE' | 'RELEASE' | 'SALE' | 'ADJUSTMENT' | 'RETURN';
+  quantity: number;
+  reference_type: string | null;
+  reference_id: string | null;
+  notes: string;
+  created_by_email: string | null;
+  created_at: string;
+}
+
+export const sellerInventoryAPI = {
+  list: () =>
+    apiClient.get<Inventory[]>('seller/inventory/'),
+  get: (id: string) =>
+    apiClient.get<Inventory>(`seller/inventory/${id}/`),
+  addStock: (id: string, data: { quantity: number; notes?: string }) =>
+    apiClient.post<Inventory>(`seller/inventory/${id}/add-stock/`, data),
+  adjust: (id: string, data: { quantity: number; low_stock_threshold?: number; notes?: string }) =>
+    apiClient.post<Inventory>(`seller/inventory/${id}/adjust/`, data),
+  transactions: (id: string) =>
+    apiClient.get<InventoryTransaction[]>(`seller/inventory/${id}/transactions/`),
 };
 
 export default apiClient;

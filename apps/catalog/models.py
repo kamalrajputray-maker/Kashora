@@ -223,3 +223,41 @@ class ProductVariant(models.Model):
                     f"for this product (SKU: {candidate.sku})."
                 )
 
+
+class ProductImage(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name="images")
+    image = models.ImageField(upload_to="products/")
+    alt_text = models.CharField(max_length=255, blank=True)
+    sort_order = models.IntegerField(default=0)
+    is_primary = models.BooleanField(default=False)
+    created_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        db_table = "product_images"
+        ordering = ["sort_order", "created_at"]
+
+    def __str__(self):
+        return f"{self.product.name} — Image {self.id}"
+
+    def save(self, *args, **kwargs):
+        if self.is_primary:
+            # Set all other images of this product to not primary
+            ProductImage.objects.filter(product=self.product, is_primary=True).exclude(pk=self.pk).update(is_primary=False)
+        else:
+            # If this is the only image, make it primary
+            if not ProductImage.objects.filter(product=self.product, is_primary=True).exclude(pk=self.pk).exists():
+                self.is_primary = True
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        was_primary = self.is_primary
+        product = self.product
+        super().delete(*args, **kwargs)
+        if was_primary:
+            next_image = ProductImage.objects.filter(product=product).order_by('sort_order', 'created_at').first()
+            if next_image:
+                next_image.is_primary = True
+                next_image.save()
+
+

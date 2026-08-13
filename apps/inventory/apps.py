@@ -2,4 +2,8 @@ from django.apps import AppConfig
 
 
 class InventoryConfig(AppConfig):
-    name = 'inventory'
+    name = 'apps.inventory'
+
+    def ready(self):
+        import apps.inventory.signals
+
