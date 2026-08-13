@@ -19,6 +19,10 @@ import ProductDetailPage from './pages/buyer/ProductDetailPage';
 import BuyerProfilePage from './pages/buyer/BuyerProfilePage';
 import CartPage from './pages/buyer/CartPage';
 import WishlistPage from './pages/buyer/WishlistPage';
+import CheckoutPage from './pages/buyer/CheckoutPage';
+import OrderListPage from './pages/buyer/OrderListPage';
+import OrderDetailPage from './pages/buyer/OrderDetailPage';
+import SellerOrderListPage from './pages/seller/SellerOrderListPage';
 
 // Seller Pages
 import SellerDashboardPage from './pages/seller/SellerDashboardPage';
@@ -66,6 +70,9 @@ const App: React.FC = () => {
               <Route path="/profile" element={<ProtectedRoute requiredRole={["BUYER", "SELLER"]}><BuyerProfilePage /></ProtectedRoute>} />
               <Route path="/cart" element={<ProtectedRoute requiredRole={["BUYER", "SELLER"]}><CartPage /></ProtectedRoute>} />
               <Route path="/wishlist" element={<ProtectedRoute requiredRole={["BUYER", "SELLER"]}><WishlistPage /></ProtectedRoute>} />
+              <Route path="/checkout" element={<ProtectedRoute requiredRole={["BUYER", "SELLER"]}><CheckoutPage /></ProtectedRoute>} />
+              <Route path="/orders" element={<ProtectedRoute requiredRole={["BUYER", "SELLER"]}><OrderListPage /></ProtectedRoute>} />
+              <Route path="/orders/:id" element={<ProtectedRoute requiredRole={["BUYER", "SELLER"]}><OrderDetailPage /></ProtectedRoute>} />
 
               {/* ── Buyer Routes ── */}
               <Route
@@ -97,6 +104,7 @@ const App: React.FC = () => {
                           <Route path="products/:id/edit" element={<SellerProductEditPage />} />
                           <Route path="inventory" element={<InventoryListPage />} />
                           <Route path="inventory/:id" element={<InventoryDetailPage />} />
+                          <Route path="orders" element={<SellerOrderListPage />} />
                           <Route path="*" element={<Navigate to="/seller/dashboard" />} />
                         </Routes>
                       </div>

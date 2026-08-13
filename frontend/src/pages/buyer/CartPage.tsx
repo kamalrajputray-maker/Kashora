@@ -134,7 +134,7 @@ export const CartPage: React.FC = () => {
               </div>
               <button
                 style={S.checkoutBtn}
-                onClick={() => alert('Order checkout flow is under development (Phase 4).')}
+                onClick={() => navigate('/checkout')}
               >
                 Proceed to Checkout
               </button>

@@ -663,4 +663,99 @@ export const wishlistAPI = {
     apiClient.delete(`wishlist/${id}/`),
 };
 
+export interface ShippingAddress {
+  full_name: string;
+  phone: string;
+  line1: string;
+  line2?: string;
+  city: string;
+  state: string;
+  pincode: string;
+}
+
+export interface OrderItem {
+  id: string;
+  variant: string;
+  product_name: string;
+  product_slug: string;
+  sku: string;
+  price: string;
+  quantity: number;
+  subtotal: string;
+  item_status: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Order {
+  id: string;
+  status: string;
+  payment_status: string;
+  payment_method: string;
+  total_amount: string;
+  shipping_charge: string;
+  discount_amount: string;
+  final_amount: string;
+  shipping_address: ShippingAddress;
+  notes: string;
+  items: OrderItem[];
+  placed_at: string;
+  updated_at: string;
+}
+
+export interface OrderListItem {
+  id: string;
+  status: string;
+  payment_status: string;
+  payment_method: string;
+  final_amount: string;
+  item_count: number;
+  first_item_name: string;
+  placed_at: string;
+}
+
+export interface CheckoutPayload {
+  payment_method: 'COD' | 'PREPAID';
+  shipping_address: ShippingAddress;
+  notes?: string;
+}
+
+export interface SellerOrderItem {
+  id: string;
+  order_id: string;
+  buyer_phone: string;
+  order_status: string;
+  payment_method: string;
+  product_name: string;
+  sku: string;
+  price: string;
+  quantity: number;
+  subtotal: string;
+  item_status: string;
+  shipping_address: ShippingAddress;
+  placed_at: string;
+  updated_at: string;
+}
+
+export const orderAPI = {
+  list: () =>
+    apiClient.get<OrderListItem[]>('orders/'),
+  get: (id: string) =>
+    apiClient.get<Order>(`orders/${id}/`),
+  checkout: (data: CheckoutPayload) =>
+    apiClient.post<Order>('orders/checkout/', data),
+  cancel: (id: string) =>
+    apiClient.post<Order>(`orders/${id}/cancel/`),
+};
+
+export const sellerOrderAPI = {
+  list: () =>
+    apiClient.get<SellerOrderItem[]>('seller/orders/'),
+  get: (id: string) =>
+    apiClient.get<SellerOrderItem>(`seller/orders/${id}/`),
+  updateStatus: (id: string, item_status: string) =>
+    apiClient.patch<SellerOrderItem>(`seller/orders/${id}/update-status/`, { item_status }),
+};
+
 export default apiClient;
+

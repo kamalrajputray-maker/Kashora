@@ -174,7 +174,7 @@ export const BuyerLayout: React.FC<BuyerLayoutProps> = ({ children, onSearch, in
                   <div style={S.dropdown}>
                     <div style={S.dropdownHeader}>Hi, {user?.first_name}</div>
                     <Link to="/profile" style={S.dropdownItem} onClick={() => setAccountOpen(false)}>My Profile</Link>
-                    <span style={{ ...S.dropdownItem, opacity: 0.5, cursor: 'not-allowed' }}>My Orders</span>
+                    <Link to="/orders" style={S.dropdownItem} onClick={() => setAccountOpen(false)}>My Orders</Link>
                     <Link to="/wishlist" style={S.dropdownItem} onClick={() => setAccountOpen(false)}>Wishlist</Link>
                     <hr style={{ border: 'none', borderBottom: '1px solid #f1f5f9', margin: '0.5rem 0' }} />
                     <span style={S.dropdownItem} onClick={handleLogout}>Logout</span>
