@@ -1,11 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { sellerProductAPI, catalogAPI, Product, PaginatedResponse } from '../../services/api';
-import '../../styles/seller.css';
 
-const badgeClass = (val: string) => `badge badge-${val.toLowerCase()}`;
+const badgeClass = (val: string) => {
+  const status = val.toUpperCase();
+  if (status === 'ACTIVE' || status === 'APPROVED') return 'sp-badge sp-badge--green';
+  if (status === 'PENDING') return 'sp-badge sp-badge--yellow';
+  if (status === 'REJECTED' || status === 'ARCHIVED') return 'sp-badge sp-badge--red';
+  if (status === 'DRAFT') return 'sp-badge sp-badge--blue';
+  return 'sp-badge';
+};
 
-const SellerProductListPage: React.FC = () => {
+export const SellerProductListPage: React.FC = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,100 +67,125 @@ const SellerProductListPage: React.FC = () => {
   };
 
   return (
-    <div className="products-container">
-      <div className="products-header">
-        <h1>📦 My Products</h1>
-        <Link to="/seller/products/create" className="btn btn-primary">+ New Product</Link>
-      </div>
-
-      {/* Filters */}
-      <div className="products-filters">
-        <input
-          type="text" placeholder="🔍 Search name, brand…"
-          value={search} onChange={e => setSearch(e.target.value)}
-        />
-        <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
-          <option value="">All Statuses</option>
-          <option value="DRAFT">Draft</option>
-          <option value="ACTIVE">Active</option>
-          <option value="INACTIVE">Inactive</option>
-          <option value="ARCHIVED">Archived</option>
-        </select>
-        <select value={approvalFilter} onChange={e => setApprovalFilter(e.target.value)}>
-          <option value="">All Approvals</option>
-          <option value="PENDING">Pending</option>
-          <option value="APPROVED">Approved</option>
-          <option value="REJECTED">Rejected</option>
-        </select>
-        <select value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}>
-          <option value="">All Categories</option>
-          {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
-      </div>
-
-      {error && <div className="alert alert-error">{error}</div>}
-
-      {isLoading ? (
-        <div className="loading-container">Loading products…</div>
-      ) : products.length === 0 ? (
-        <div className="empty-state">
-          <div className="empty-icon">📦</div>
-          <h3>No products yet</h3>
-          <p>Start by adding your first product to your store.</p>
-          <Link to="/seller/products/create" className="btn btn-primary">Add First Product</Link>
+    <>
+      <div className="sp-header">
+        <div>
+          <h1 className="sp-header__title">Products</h1>
+          <p className="sp-header__sub">Manage your product catalog</p>
         </div>
-      ) : (
-        <>
-          <table className="product-table">
-            <thead>
-              <tr>
-                <th>Product</th>
-                <th>Category</th>
-                <th>Price</th>
-                <th>Status</th>
-                <th>Approval</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {products.map(p => (
-                <tr key={p.id}>
-                  <td>
-                    <div className="product-name-cell">
-                      {p.name}
-                      <small>{p.brand} · {p.slug}</small>
-                    </div>
-                  </td>
-                  <td>{p.category_name}</td>
-                  <td>₹{Number(p.base_price).toFixed(2)}</td>
-                  <td><span className={badgeClass(p.status)}>{p.status}</span></td>
-                  <td><span className={badgeClass(p.approval_status)}>{p.approval_status}</span></td>
-                  <td>
-                    <div style={{ display: 'flex', gap: 8 }}>
-                      <Link to={`/seller/products/${p.id}`} className="btn btn-sm btn-secondary">View</Link>
-                      <Link to={`/seller/products/${p.id}/edit`} className="btn btn-sm btn-primary">Edit</Link>
-                      {p.approval_status !== 'PENDING' && p.approval_status !== 'APPROVED' && (
-                        <button className="btn btn-sm btn-success" onClick={() => handleSubmit(p.id)}>Submit</button>
-                      )}
-                      <button className="btn btn-sm btn-danger" onClick={() => handleDelete(p.id, p.name)}>Delete</button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="sp-header__actions">
+          <Link to="/seller/products/create" className="sp-btn sp-btn--primary">
+            + New Product
+          </Link>
+        </div>
+      </div>
 
-          {/* Pagination */}
-          <div className="pagination-bar">
-            <button className="btn btn-secondary btn-sm" disabled={!pagination.previous}
-              onClick={() => fetchProducts(pagination.page - 1)}>← Prev</button>
-            <span>Page {pagination.page} · {pagination.count} total</span>
-            <button className="btn btn-secondary btn-sm" disabled={!pagination.next}
-              onClick={() => fetchProducts(pagination.page + 1)}>Next →</button>
+      <div className="sp-card">
+        <div className="sp-card__head">
+          <h2 className="sp-card__title">All Products</h2>
+          <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
+            <div className="sp-search">
+              <span className="sp-search__icon">⌕</span>
+              <input
+                className="sp-search__input"
+                type="text" placeholder="Search name, brand…"
+                value={search} onChange={e => setSearch(e.target.value)}
+              />
+            </div>
+            <select className="sp-input" style={{ width: 'auto' }} value={statusFilter} onChange={e => setStatusFilter(e.target.value)}>
+              <option value="">All Statuses</option>
+              <option value="DRAFT">Draft</option>
+              <option value="ACTIVE">Active</option>
+              <option value="INACTIVE">Inactive</option>
+              <option value="ARCHIVED">Archived</option>
+            </select>
+            <select className="sp-input" style={{ width: 'auto' }} value={approvalFilter} onChange={e => setApprovalFilter(e.target.value)}>
+              <option value="">All Approvals</option>
+              <option value="PENDING">Pending</option>
+              <option value="APPROVED">Approved</option>
+              <option value="REJECTED">Rejected</option>
+            </select>
+            <select className="sp-input" style={{ width: 'auto' }} value={categoryFilter} onChange={e => setCategoryFilter(e.target.value)}>
+              <option value="">All Categories</option>
+              {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+            </select>
           </div>
-        </>
-      )}
-    </div>
+        </div>
+
+        {error && <div className="sp-alert sp-alert--error" style={{ margin: '16px 20px 0' }}>{error}</div>}
+
+        {isLoading ? (
+          <div className="sp-loading">Loading products…</div>
+        ) : products.length === 0 ? (
+          <div className="sp-empty">
+            <span className="sp-empty__icon">📦</span>
+            <span className="sp-empty__text">No products found.</span>
+            {!search && !statusFilter && !approvalFilter && !categoryFilter && (
+              <Link to="/seller/products/create" className="sp-btn sp-btn--primary" style={{ marginTop: 12 }}>Add First Product</Link>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className="sp-table-wrap">
+              <table className="sp-table">
+                <thead>
+                  <tr>
+                    <th>Product</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th>Status</th>
+                    <th>Approval</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {products.map(p => (
+                    <tr key={p.id}>
+                      <td>
+                        <div className="td-bold">{p.name}</div>
+                        <div className="td-sub">{p.brand} · {p.slug}</div>
+                      </td>
+                      <td>{p.category_name}</td>
+                      <td className="td-bold">₹{Number(p.base_price).toFixed(2)}</td>
+                      <td><span className={badgeClass(p.status)}>{p.status}</span></td>
+                      <td><span className={badgeClass(p.approval_status)}>{p.approval_status}</span></td>
+                      <td>
+                        <div style={{ display: 'flex', gap: 6 }}>
+                          <Link to={`/seller/products/${p.id}`} className="sp-btn sp-btn--ghost sp-btn--sm">View</Link>
+                          <Link to={`/seller/products/${p.id}/edit`} className="sp-btn sp-btn--ghost sp-btn--sm">Edit</Link>
+                          {p.approval_status !== 'PENDING' && p.approval_status !== 'APPROVED' && (
+                            <button className="sp-btn sp-btn--primary sp-btn--sm" onClick={() => handleSubmit(p.id)}>Submit</button>
+                          )}
+                          <button className="sp-btn sp-btn--ghost sp-btn--sm" style={{ color: 'var(--badge-red-txt)', borderColor: 'var(--badge-red-bg)' }} onClick={() => handleDelete(p.id, p.name)}>Delete</button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderTop: '1px solid var(--sel-card-border)' }}>
+              <button 
+                className="sp-btn sp-btn--ghost sp-btn--sm" 
+                disabled={!pagination.previous}
+                onClick={() => fetchProducts(pagination.page - 1)}
+              >
+                ← Prev
+              </button>
+              <span style={{ fontSize: '0.85rem', color: 'var(--sel-text-muted)' }}>Page {pagination.page} · {pagination.count} total items</span>
+              <button 
+                className="sp-btn sp-btn--ghost sp-btn--sm" 
+                disabled={!pagination.next}
+                onClick={() => fetchProducts(pagination.page + 1)}
+              >
+                Next →
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </>
   );
 };
 

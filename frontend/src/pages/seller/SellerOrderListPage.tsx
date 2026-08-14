@@ -1,14 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { sellerOrderAPI, SellerOrderItem } from '../../services/api';
-import '../../styles/seller.css';
-
-const STATUS_CONFIG: Record<string, { bg: string; color: string }> = {
-  PENDING:   { bg: '#fef3c7', color: '#92400e' },
-  CONFIRMED: { bg: '#dbeafe', color: '#1e40af' },
-  SHIPPED:   { bg: '#e0e7ff', color: '#3730a3' },
-  DELIVERED: { bg: '#d1fae5', color: '#065f46' },
-  CANCELLED: { bg: '#fee2e2', color: '#991b1b' },
-};
 
 const NEXT_STATUS: Record<string, string[]> = {
   PENDING: ['CONFIRMED', 'CANCELLED'],
@@ -16,23 +7,12 @@ const NEXT_STATUS: Record<string, string[]> = {
   SHIPPED: ['DELIVERED'],
 };
 
-const S = {
-  container: { padding: '2rem', maxWidth: '1100px', margin: '0 auto', fontFamily: "'Outfit', 'Inter', sans-serif" },
-  title: { fontSize: '1.75rem', fontWeight: '700', color: '#1e293b', marginBottom: '1.5rem' },
-  card: { background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '1.25rem 1.5rem', marginBottom: '1rem' },
-  grid: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '0.75rem' },
-  label: { fontSize: '0.75rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase' as const, letterSpacing: '0.05em' },
-  value: { fontSize: '0.92rem', color: '#1e293b', fontWeight: '500', marginTop: '0.1rem' },
-  badge: (status: string) => {
-    const cfg = STATUS_CONFIG[status] || { bg: '#f1f5f9', color: '#64748b' };
-    return { background: cfg.bg, color: cfg.color, padding: '0.25rem 0.65rem', borderRadius: '20px', fontSize: '0.78rem', fontWeight: '700', display: 'inline-block' };
-  },
-  actionBtn: (variant: 'green' | 'red' | 'blue') => ({
-    padding: '0.4rem 0.85rem', border: 'none', borderRadius: '6px', fontWeight: '700', cursor: 'pointer', fontSize: '0.8rem',
-    background: variant === 'green' ? '#10b981' : variant === 'red' ? '#ef4444' : '#3b82f6',
-    color: '#fff', marginRight: '0.5rem'
-  }),
-  emptyCard: { background: '#fff', borderRadius: '12px', border: '1px solid #e2e8f0', padding: '4rem 2rem', textAlign: 'center' as const }
+const badgeClass = (status: string) => {
+  if (status === 'CANCELLED') return 'sp-badge sp-badge--red';
+  if (status === 'DELIVERED') return 'sp-badge sp-badge--green';
+  if (status === 'SHIPPED')   return 'sp-badge sp-badge--blue';
+  if (status === 'PENDING')   return 'sp-badge sp-badge--yellow';
+  return 'sp-badge'; // default greyish/blue
 };
 
 export const SellerOrderListPage: React.FC = () => {
@@ -57,85 +37,117 @@ export const SellerOrderListPage: React.FC = () => {
       .finally(() => setUpdating(null));
   };
 
-  if (loading) {
-    return <div style={S.container}>Loading orders...</div>;
-  }
+  const pending = items.filter(i => i.item_status === 'PENDING').length;
+  const toShip = items.filter(i => i.item_status === 'CONFIRMED').length;
 
   return (
-    <div style={S.container}>
-        <h1 style={S.title}>Orders</h1>
+    <>
+      <div className="sp-header">
+        <div>
+          <h1 className="sp-header__title">Orders</h1>
+          <p className="sp-header__sub">Manage and track your customer orders</p>
+        </div>
+      </div>
 
-        {items.length === 0 ? (
-          <div style={S.emptyCard}>
-            <span style={{ fontSize: '4rem', display: 'block', marginBottom: '1rem' }}>📦</span>
-            <h3 style={{ fontWeight: '700', color: '#1e293b' }}>No orders yet</h3>
-            <p style={{ color: '#64748b', fontSize: '0.9rem' }}>Orders for your products will appear here.</p>
-          </div>
-        ) : (
-          items.map(item => {
+      <div className="sp-stats" style={{ marginBottom: 24 }}>
+        <div className="sp-stat-card" style={{ '--card-accent': '#6366f1', '--card-icon-bg': 'rgba(99,102,241,0.1)', '--card-icon-color': '#4f46e5' } as React.CSSProperties}>
+          <div className="sp-stat-icon">◈</div>
+          <div className="sp-stat-label">Total Orders</div>
+          <div className="sp-stat-value">{items.length}</div>
+        </div>
+        <div className="sp-stat-card" style={{ '--card-accent': '#f59e0b', '--card-icon-bg': 'rgba(245,158,11,0.1)', '--card-icon-color': '#d97706' } as React.CSSProperties}>
+          <div className="sp-stat-icon">⏳</div>
+          <div className="sp-stat-label">Pending Action</div>
+          <div className="sp-stat-value">{pending}</div>
+        </div>
+        <div className="sp-stat-card" style={{ '--card-accent': '#3b82f6', '--card-icon-bg': 'rgba(59,130,246,0.1)', '--card-icon-color': '#2563eb' } as React.CSSProperties}>
+          <div className="sp-stat-icon">📦</div>
+          <div className="sp-stat-label">To Ship</div>
+          <div className="sp-stat-value">{toShip}</div>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="sp-loading">Loading orders...</div>
+      ) : items.length === 0 ? (
+        <div className="sp-empty">
+          <span className="sp-empty__icon">🛒</span>
+          <span className="sp-empty__text">No orders yet.</span>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          {items.map(item => {
             const addr = item.shipping_address;
             const nextStatuses = NEXT_STATUS[item.item_status] || [];
+            
             return (
-              <div key={item.id} style={S.card}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+              <div key={item.id} className="sp-card">
+                <div className="sp-card__head" style={{ padding: '16px 20px', alignItems: 'flex-start' }}>
                   <div>
-                    <p style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: '600' }}>
-                      Order #{item.order_id.substring(0, 8).toUpperCase()}
-                    </p>
-                    <h4 style={{ fontSize: '1rem', fontWeight: '700', color: '#1e293b', margin: '0.25rem 0' }}>
-                      {item.product_name}
-                    </h4>
-                    <p style={{ fontSize: '0.82rem', color: '#94a3b8' }}>SKU: {item.sku}</p>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--sel-text-muted)', fontWeight: 600, marginBottom: 4 }}>
+                      ORDER #{item.order_id.substring(0, 8).toUpperCase()}
+                    </div>
+                    <div className="sp-card__title" style={{ fontSize: '1.1rem' }}>{item.product_name}</div>
+                    <div style={{ fontSize: '0.8rem', color: 'var(--sel-text-muted)', marginTop: 4 }}>SKU: {item.sku}</div>
                   </div>
                   <div style={{ textAlign: 'right' }}>
-                    <span style={S.badge(item.item_status)}>{item.item_status}</span>
-                    <p style={{ fontSize: '1.1rem', fontWeight: '800', color: '#0f172a', marginTop: '0.5rem' }}>₹{item.subtotal}</p>
+                    <span className={badgeClass(item.item_status)}>{item.item_status}</span>
+                    <div style={{ fontSize: '1.2rem', fontWeight: 700, color: 'var(--sel-text-1)', marginTop: 8 }}>
+                      ₹{item.subtotal}
+                    </div>
                   </div>
                 </div>
+                
+                <div className="sp-card__body" style={{ padding: '16px 20px' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 16, marginBottom: 16 }}>
+                    <div>
+                      <div className="sp-label" style={{ fontSize: '0.75rem', textTransform: 'uppercase' }}>Buyer Phone</div>
+                      <div style={{ color: 'var(--sel-text-1)', fontWeight: 500, fontSize: '0.9rem' }}>{item.buyer_phone}</div>
+                    </div>
+                    <div>
+                      <div className="sp-label" style={{ fontSize: '0.75rem', textTransform: 'uppercase' }}>Quantity</div>
+                      <div style={{ color: 'var(--sel-text-1)', fontWeight: 500, fontSize: '0.9rem' }}>{item.quantity} × ₹{item.price}</div>
+                    </div>
+                    <div>
+                      <div className="sp-label" style={{ fontSize: '0.75rem', textTransform: 'uppercase' }}>Payment</div>
+                      <div style={{ color: 'var(--sel-text-1)', fontWeight: 500, fontSize: '0.9rem' }}>{item.payment_method}</div>
+                    </div>
+                    <div>
+                      <div className="sp-label" style={{ fontSize: '0.75rem', textTransform: 'uppercase' }}>Placed At</div>
+                      <div style={{ color: 'var(--sel-text-1)', fontWeight: 500, fontSize: '0.9rem' }}>
+                        {new Date(item.placed_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </div>
+                    </div>
+                  </div>
 
-                <div style={S.grid}>
-                  <div>
-                    <p style={S.label}>Buyer</p>
-                    <p style={S.value}>{item.buyer_phone}</p>
+                  <div style={{ background: 'var(--sel-bg)', padding: '12px 16px', borderRadius: 'var(--sel-radius-sm)', fontSize: '0.85rem', color: 'var(--sel-text-2)', border: '1px solid var(--sel-card-border)' }}>
+                    <strong>📍 Shipping Address:</strong> {addr.full_name}, {addr.line1}{addr.line2 ? `, ${addr.line2}` : ''}, {addr.city}, {addr.state} – {addr.pincode} | {addr.phone}
                   </div>
-                  <div>
-                    <p style={S.label}>Quantity</p>
-                    <p style={S.value}>{item.quantity} × ₹{item.price}</p>
-                  </div>
-                  <div>
-                    <p style={S.label}>Payment Method</p>
-                    <p style={S.value}>{item.payment_method}</p>
-                  </div>
-                  <div>
-                    <p style={S.label}>Placed At</p>
-                    <p style={S.value}>{new Date(item.placed_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
-                  </div>
+
+                  {nextStatuses.length > 0 && (
+                    <div style={{ marginTop: 20, display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--sel-text-muted)' }}>UPDATE STATUS:</span>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        {nextStatuses.map(ns => (
+                          <button
+                            key={ns}
+                            className={`sp-btn ${ns === 'CANCELLED' ? 'sp-btn--ghost' : 'sp-btn--primary'} sp-btn--sm`}
+                            onClick={() => handleUpdateStatus(item.id, ns)}
+                            disabled={updating === item.id}
+                          >
+                            Mark as {ns}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-
-                <div style={{ background: '#f8fafc', borderRadius: '6px', padding: '0.75rem', marginBottom: '1rem', fontSize: '0.85rem', color: '#475569' }}>
-                  📍 {addr.full_name}, {addr.line1}{addr.line2 ? `, ${addr.line2}` : ''}, {addr.city}, {addr.state} – {addr.pincode} | {addr.phone}
-                </div>
-
-                {nextStatuses.length > 0 && (
-                  <div>
-                    <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: '600', marginRight: '0.5rem' }}>Update Status:</span>
-                    {nextStatuses.map(ns => (
-                      <button
-                        key={ns}
-                        style={S.actionBtn(ns === 'CANCELLED' ? 'red' : ns === 'SHIPPED' ? 'blue' : 'green')}
-                        onClick={() => handleUpdateStatus(item.id, ns)}
-                        disabled={updating === item.id}
-                      >
-                        {ns}
-                      </button>
-                    ))}
-                  </div>
-                )}
               </div>
             );
-          })
-        )}
-      </div>
+          })}
+        </div>
+      )}
+    </>
   );
 };
 
