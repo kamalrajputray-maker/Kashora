@@ -52,16 +52,28 @@ const SellerDashboardPage: React.FC = () => {
       <Grid container spacing={3}>
         {stats.map((item, idx) => (
           <Grid item xs={12} sm={6} md={3} key={idx}>
-            <Card elevation={2} sx={{ height: '100%' }}>
-              <CardContent>
-                <Typography variant="subtitle2" color="textSecondary">
-                  {item.label}
-                </Typography>
-                <Typography variant="h5" color="primary">
-                  {item.value}
-                </Typography>
-              </CardContent>
-            </Card>
+            <Card elevation={2} sx={{
+  height: '100%',
+  background: {
+    'Total Products': '#4f46e5',
+    'Active Orders': '#10b981',
+    'Revenue': '#f59e0b',
+    'Low Stock Items': '#ef4444'
+  }[item.label] ?? '#374151',
+  color: '#fff',
+  borderRadius: '12px',
+  boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
+}}>
+  <CardContent>
+    <Typography variant="subtitle2" sx={{ opacity: 0.8 }}>
+      {item.label}
+    </Typography>
+    <Typography variant="h5" sx={{ fontWeight: '600', mt: 0.5 }}>
+      {item.value}
+    </Typography>
+  </CardContent>
+</Card>
+
           </Grid>
         ))}
       </Grid>
