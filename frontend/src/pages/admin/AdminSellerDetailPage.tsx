@@ -13,11 +13,17 @@ const AdminSellerDetailPage: React.FC = () => {
   const navigate = useNavigate();
 
   const [seller, setSeller] = useState<AdminSellerDetail | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
-  const [actionModal, setActionModal] = useState<ActionModal>({ type: null });
-  const [isActioning, setIsActioning] = useState(false);
+  const [showTop, setShowTop] = useState(false);
+
+  // Scroll listener for Back to Top button
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowTop(window.scrollY > 200);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
 
   useEffect(() => {
     if (sellerId) {
@@ -188,7 +194,7 @@ const AdminSellerDetailPage: React.FC = () => {
       {/* Personal Information */}
       <section className="detail-section">
         <h2>Personal Information</h2>
-        <div className="info-grid">
+        <div className="detail-grid">
           <div className="info-item">
             <label>Name</label>
             <p>{`${seller.user_first_name} ${seller.user_last_name}`}</p>
@@ -207,6 +213,11 @@ const AdminSellerDetailPage: React.FC = () => {
           </div>
         </div>
       </section>
+      {showTop && (
+        <button className="back-to-top" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+          ↑ Top
+        </button>
+      )}
 
       {/* Business Information */}
       <section className="detail-section">
