@@ -3,27 +3,21 @@ import { useNavigate } from 'react-router-dom';
 import { sellerInventoryAPI, Inventory } from '../../services/api';
 
 const S = {
-  container: { padding: '2rem', maxWidth: '1400px', margin: '0 auto', fontFamily: "'Inter', sans-serif" },
+  container: { padding: '2rem', maxWidth: '1400px', margin: '0 auto', fontFamily: "'Inter', sans-serif", height: '100vh', display: 'flex', flexDirection: 'column' },
   header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' },
   title: { fontSize: '1.75rem', fontWeight: '700', color: '#1e293b' },
   searchBar: { padding: '0.6rem 1rem', width: '300px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '0.9rem' },
-  tableCard: { background: '#fff', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', overflow: 'hidden' },
-  table: { width: '100%', borderCollapse: 'collapse', textAlign: 'left' as const },
+  tableCard: { background: '#fff', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', overflow: 'hidden', overflowY: 'auto', maxHeight: 'calc(100vh - 200px)' },
+  tableWrapper: { overflowX: 'auto' },
+  table: { width: '100%', minWidth: '800px', borderCollapse: 'collapse', textAlign: 'left' as const },
   th: { background: '#f8fafc', padding: '1rem', fontWeight: '600', color: '#475569', borderBottom: '1px solid #e2e8f0', fontSize: '0.85rem' },
   td: { padding: '1rem', borderBottom: '1px solid #e2e8f0', color: '#334155', fontSize: '0.9rem' },
   badge: (status: string) => {
     let bg = '#d1fae5';
     let text = '#065f46';
-    if (status === 'LOW_STOCK') {
-      bg = '#fef3c7';
-      text = '#92400e';
-    } else if (status === 'OUT_OF_STOCK') {
-      bg = '#fee2e2';
-      text = '#991b1b';
-    }
-    return {
-      background: bg, color: text, padding: '0.25rem 0.6rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: '600', display: 'inline-block'
-    };
+    if (status === 'LOW_STOCK') { bg = '#fef3c7'; text = '#92400e'; }
+    else if (status === 'OUT_OF_STOCK') { bg = '#fee2e2'; text = '#991b1b'; }
+    return { background: bg, color: text, padding: '0.25rem 0.6rem', borderRadius: '9999px', fontSize: '0.75rem', fontWeight: '600', display: 'inline-block' };
   },
   btn: { padding: '0.5rem 0.85rem', borderRadius: '6px', fontSize: '0.82rem', fontWeight: '600', cursor: 'pointer', border: 'none' },
   primaryBtn: { background: '#6c63ff', color: '#fff' },
@@ -35,6 +29,7 @@ const S = {
   label: { display: 'block', marginBottom: '0.5rem', fontWeight: '600', color: '#475569', fontSize: '0.85rem' },
   input: { width: '100%', padding: '0.6rem', border: '1px solid #cbd5e1', borderRadius: '6px', fontSize: '0.9rem' },
 };
+
 
 export const InventoryListPage: React.FC = () => {
   const navigate = useNavigate();
@@ -139,6 +134,7 @@ export const InventoryListPage: React.FC = () => {
         <p>Loading inventory...</p>
       ) : (
         <div style={S.tableCard}>
+          <div style={S.tableWrapper}>
           <table style={S.table}>
             <thead>
               <tr>
@@ -206,7 +202,8 @@ export const InventoryListPage: React.FC = () => {
             </tbody>
           </table>
         </div>
-      )}
+      </div>
+    )}
 
       {/* Add Stock Modal */}
       {activeModal === 'add' && selectedItem && (
