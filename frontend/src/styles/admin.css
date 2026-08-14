@@ -2,15 +2,69 @@
 
 .admin-seller-list-container,
 .admin-seller-detail-container {
-  max-width: 1200px;
+  max-width: 100%;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 1rem;
+  box-sizing: border-box;
 }
 
-/* Page Header */
+/* Header – flex layout for responsiveness */
 .page-header {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 30px;
-  padding-bottom: 20px;
+  padding: 1rem 0;
   border-bottom: 2px solid #ddd;
 }
+
+.page-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.page-header .text-muted {
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+}
+
+/* Ensure filters and table are responsive */
+.filters-section,
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.filters-grid {
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+}
+
+.actions-bar {
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+/* Back to top and other fixed elements stay within viewport */
+.back-to-top {
+  right: 1rem;
+  bottom: 1rem;
+}
+
+/* Remove any lingering fixed widths */
+.admin-table {
+  width: 100%;
+  min-width: 0;
+}
+
+
+
+/* Page Header */
+
 
 .page-header h1 {
   margin: 0 0 5px 0;

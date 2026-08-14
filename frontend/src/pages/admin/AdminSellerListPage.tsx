@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { adminSellerAPI, AdminSellerListItem, AdminSellerListParams } from '../../services/api';
-import '../../styles/admin.css';
 
 interface Filters {
   status: string;
@@ -26,6 +25,7 @@ const AdminSellerListPage: React.FC = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [pageSize] = useState(20);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     fetchSellers();
   }, [filters]);
@@ -61,7 +61,7 @@ const AdminSellerListPage: React.FC = () => {
     setFilters((prev) => ({
       ...prev,
       [name]: value,
-      page: 1, // Reset to first page on filter change
+      page: 1,
     }));
   };
 
@@ -98,7 +98,7 @@ const AdminSellerListPage: React.FC = () => {
 
       {/* Filters */}
       <div className="filters-section">
-        <h3>Filters & Search</h3>
+        <h3>Filters &amp; Search</h3>
 
         <div className="search-box">
           <input

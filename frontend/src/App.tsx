@@ -1,11 +1,10 @@
-import AdminDashboardLayout from './components/AdminDashboardLayout';
-import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useParams, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import React from 'react';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
-import SellerNavigation from './components/SellerNavigation';
-import AdminNavigation from './components/AdminNavigation';
+import AdminDashboardLayout from './components/AdminDashboardLayout';
+import SellerDashboardLayout from './components/SellerDashboardLayout';
 
 // Auth Pages
 import SellerLoginPage from './pages/seller/SellerLoginPage';
@@ -39,6 +38,7 @@ import AdminSellerListPage from './pages/admin/AdminSellerListPage';
 import AdminSellerDetailPage from './pages/admin/AdminSellerDetailPage';
 import AdminCategoryListPage from './pages/admin/categories/AdminCategoryListPage';
 import AdminCategoryFormPage from './pages/admin/categories/AdminCategoryFormPage';
+import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 
 // Not Found
 import NotFoundPage from './pages/NotFoundPage';
@@ -53,6 +53,14 @@ const CategoryRedirect: React.FC = () => {
   return <Navigate to={`/products?category=${slug}`} replace />;
 };
 
+/** Hide the global Navbar on admin/seller dashboard routes */
+const ConditionalNavbar: React.FC = () => {
+  const location = useLocation();
+  const hideOn = ['/admin/', '/seller/', '/super-admin/'];
+  if (hideOn.some((prefix) => location.pathname.startsWith(prefix))) return null;
+  return <Navbar />;
+};
+
 const App: React.FC = () => {
   const prefersDark = useMediaQuery('(prefers-color-scheme: dark)');
   const theme = React.useMemo(() => getTheme(prefersDark ? 'dark' : 'light'), [prefersDark]);
@@ -62,78 +70,86 @@ const App: React.FC = () => {
       <CssBaseline />
       <AuthProvider>
         <Router>
-          <div className="app">
-            <Navbar />
-            <div className="app-content">
-              <Routes>
-                {/* ── Public Auth Routes ── */}
-                <Route path="/login" element={<BuyerLoginPage />} />
-                <Route path="/seller/login" element={<SellerLoginPage />} />
-                <Route path="/seller/register" element={<SellerRegisterPage />} />
-                <Route path="/admin/login" element={<AdminLoginPage />} />
+          <ConditionalNavbar />
+          <Routes>
+            {/* ── Public Auth Routes ── */}
+            <Route path="/login" element={<BuyerLoginPage />} />
+            <Route path="/seller/login" element={<SellerLoginPage />} />
+            <Route path="/seller/register" element={<SellerRegisterPage />} />
+            <Route path="/admin/login" element={<AdminLoginPage />} />
 
-                {/* ── Public Catalog Routes ── */}
-                <Route path="/products" element={<ProductListPage />} />
-                <Route path="/products/:slug" element={<ProductDetailPage />} />
-                <Route path="/categories/:slug" element={<CategoryRedirect />} />
-                <Route path="/profile" element={<ProtectedRoute requiredRole={["BUYER", "SELLER"]}><BuyerProfilePage /></ProtectedRoute>} />
-                <Route path="/cart" element={<ProtectedRoute requiredRole={["BUYER", "SELLER"]}><CartPage /></ProtectedRoute>} />
-                <Route path="/wishlist" element={<ProtectedRoute requiredRole={["BUYER", "SELLER"]}><WishlistPage /></ProtectedRoute>} />
-                <Route path="/checkout" element={<ProtectedRoute requiredRole={["BUYER", "SELLER"]}><CheckoutPage /></ProtectedRoute>} />
-                <Route path="/orders" element={<ProtectedRoute requiredRole={["BUYER", "SELLER"]}><OrderListPage /></ProtectedRoute>} />
-                <Route path="/orders/:id" element={<ProtectedRoute requiredRole={["BUYER", "SELLER"]}><OrderDetailPage /></ProtectedRoute>} />
+            {/* ── Public Catalog Routes ── */}
+            <Route path="/products" element={<ProductListPage />} />
+            <Route path="/products/:slug" element={<ProductDetailPage />} />
+            <Route path="/categories/:slug" element={<CategoryRedirect />} />
+            <Route path="/profile" element={<ProtectedRoute requiredRole={['BUYER', 'SELLER']}><BuyerProfilePage /></ProtectedRoute>} />
+            <Route path="/cart" element={<ProtectedRoute requiredRole={['BUYER', 'SELLER']}><CartPage /></ProtectedRoute>} />
+            <Route path="/wishlist" element={<ProtectedRoute requiredRole={['BUYER', 'SELLER']}><WishlistPage /></ProtectedRoute>} />
+            <Route path="/checkout" element={<ProtectedRoute requiredRole={['BUYER', 'SELLER']}><CheckoutPage /></ProtectedRoute>} />
+            <Route path="/orders" element={<ProtectedRoute requiredRole={['BUYER', 'SELLER']}><OrderListPage /></ProtectedRoute>} />
+            <Route path="/orders/:id" element={<ProtectedRoute requiredRole={['BUYER', 'SELLER']}><OrderDetailPage /></ProtectedRoute>} />
 
-                {/* ── Buyer Routes ── */}
-                <Route path="/buyer/*" element={<ProtectedRoute requiredRole="BUYER"><Routes>
+            {/* ── Buyer Routes ── */}
+            <Route path="/buyer/*" element={
+              <ProtectedRoute requiredRole="BUYER">
+                <Routes>
                   <Route path="dashboard" element={<BuyerDashboardPage />} />
                   <Route path="*" element={<Navigate to="/buyer/dashboard" />} />
-                </Routes></ProtectedRoute>} />
+                </Routes>
+              </ProtectedRoute>
+            } />
 
-                {/* ── Seller Routes ── */}
-                <Route path="/seller/*" element={<ProtectedRoute requiredRole="SELLER"><div className="seller-layout">
-                  <SellerNavigation />
-                  <div className="seller-content">
-                    <Routes>
-                      <Route path="dashboard" element={<SellerDashboardPage />} />
-                      <Route path="profile" element={<SellerProfilePage />} />
-                      <Route path="products" element={<SellerProductListPage />} />
-                      <Route path="products/create" element={<SellerProductCreatePage />} />
-                      <Route path="products/:id" element={<SellerProductDetailPage />} />
-                      <Route path="products/:id/edit" element={<SellerProductEditPage />} />
-                      <Route path="inventory" element={<InventoryListPage />} />
-                      <Route path="inventory/:id" element={<InventoryDetailPage />} />
-                      <Route path="orders" element={<SellerOrderListPage />} />
-                      <Route path="*" element={<Navigate to="/seller/dashboard" />} />
-                    </Routes>
-                  </div>
-                </div></ProtectedRoute>} />
+            {/* ── Seller Routes (with SellerDashboardLayout) ── */}
+            <Route path="/seller/*" element={
+              <ProtectedRoute requiredRole="SELLER">
+                <SellerDashboardLayout />
+              </ProtectedRoute>
+            }>
+              <Route path="dashboard" element={<SellerDashboardPage />} />
+              <Route path="profile" element={<SellerProfilePage />} />
+              <Route path="products" element={<SellerProductListPage />} />
+              <Route path="products/create" element={<SellerProductCreatePage />} />
+              <Route path="products/:id" element={<SellerProductDetailPage />} />
+              <Route path="products/:id/edit" element={<SellerProductEditPage />} />
+              <Route path="inventory" element={<InventoryListPage />} />
+              <Route path="inventory/:id" element={<InventoryDetailPage />} />
+              <Route path="orders" element={<SellerOrderListPage />} />
+              <Route path="*" element={<Navigate to="/seller/dashboard" />} />
+            </Route>
 
-                {/* ── Admin & SuperAdmin Routes ── */}
-                <Route path="/admin/*" element={<ProtectedRoute requiredRole={ADMIN_ROLES}><AdminDashboardLayout /></ProtectedRoute>} >
-                  <Route path="dashboard" element={<div>Admin Dashboard (to be implemented)</div>} />
-                  <Route path="buyers" element={<div>Buyer Management (to be implemented)</div>} />
-                  <Route path="products" element={<div>Product Management (to be implemented)</div>} />
-                  <Route path="orders" element={<div>Order Management (to be implemented)</div>} />
-                  <Route path="reports" element={<div>Reports (to be implemented)</div>} />
-                  <Route path="sellers" element={<AdminSellerListPage />} />
-                  <Route path="sellers/:sellerId" element={<AdminSellerDetailPage />} />
-                  <Route path="categories" element={<AdminCategoryListPage />} />
-                  <Route path="categories/create" element={<AdminCategoryFormPage />} />
-                  <Route path="categories/:id/edit" element={<AdminCategoryFormPage />} />
-                  <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
-                </Route>
-                <Route path="/super-admin/*" element={<ProtectedRoute requiredRole={['SUPER_ADMIN']}><AdminDashboardLayout /></ProtectedRoute>} >
-                  <Route path="dashboard" element={<div>Super Admin Dashboard (to be implemented)</div>} />
-                  <Route path="admins" element={<div>Admin Management (to be implemented)</div>} />
-                  <Route path="*" element={<Navigate to="/super-admin/dashboard" replace />} />
-                </Route>
+            {/* ── Admin & SuperAdmin Routes (with AdminDashboardLayout) ── */}
+            <Route path="/admin/*" element={
+              <ProtectedRoute requiredRole={ADMIN_ROLES}>
+                <AdminDashboardLayout />
+              </ProtectedRoute>
+            }>
+              <Route path="dashboard" element={<AdminDashboardPage />} />
+              <Route path="buyers" element={<div className="adm-content">Buyer Management (coming soon)</div>} />
+              <Route path="products" element={<div className="adm-content">Product Management (coming soon)</div>} />
+              <Route path="orders" element={<div className="adm-content">Order Management (coming soon)</div>} />
+              <Route path="reports" element={<div className="adm-content">Reports (coming soon)</div>} />
+              <Route path="sellers" element={<AdminSellerListPage />} />
+              <Route path="sellers/:sellerId" element={<AdminSellerDetailPage />} />
+              <Route path="categories" element={<AdminCategoryListPage />} />
+              <Route path="categories/create" element={<AdminCategoryFormPage />} />
+              <Route path="categories/:id/edit" element={<AdminCategoryFormPage />} />
+              <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
+            </Route>
 
-                {/* ── Redirects ── */}
-                <Route path="/" element={<Navigate to="/login" />} />
-                <Route path="*" element={<NotFoundPage />} />
-              </Routes>
-            </div>
-          </div>
+            <Route path="/super-admin/*" element={
+              <ProtectedRoute requiredRole={['SUPER_ADMIN']}>
+                <AdminDashboardLayout />
+              </ProtectedRoute>
+            }>
+              <Route path="dashboard" element={<div style={{ padding: 24 }}>Super Admin Dashboard (coming soon)</div>} />
+              <Route path="admins" element={<div style={{ padding: 24 }}>Admin Management (coming soon)</div>} />
+              <Route path="*" element={<Navigate to="/super-admin/dashboard" replace />} />
+            </Route>
+
+            {/* ── Redirects ── */}
+            <Route path="/" element={<Navigate to="/login" />} />
+            <Route path="*" element={<NotFoundPage />} />
+          </Routes>
         </Router>
       </AuthProvider>
     </ThemeProvider>
