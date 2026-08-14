@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { sellerAPI, SellerDashboard } from '../../services/api';
-import { Grid, Card, CardContent, Typography, Box, Button } from '@mui/material';
-import '../../styles/seller.css';
 
 const SellerDashboardPage: React.FC = () => {
   const [dashboard, setDashboard] = useState<SellerDashboard | null>(null);
@@ -10,85 +8,148 @@ const SellerDashboardPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchDashboard();
+    (async () => {
+      try {
+        setIsLoading(true);
+        const response = await sellerAPI.getDashboard();
+        setDashboard(response.data);
+        setError(null);
+      } catch (err) {
+        setError('Failed to load dashboard');
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    })();
   }, []);
 
-  const fetchDashboard = async () => {
-    try {
-      setIsLoading(true);
-      const response = await sellerAPI.getDashboard();
-      setDashboard(response.data);
-      setError(null);
-    } catch (err) {
-      setError('Failed to load dashboard');
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   if (isLoading) {
-    return <div className="loading-container">Loading dashboard...</div>;
+    return <div className="sp-loading">Loading dashboard...</div>;
   }
   if (error) {
-    return <div className="alert alert-error">{error}</div>;
+    return <div className="sp-alert sp-alert--error">{error}</div>;
   }
   if (!dashboard) {
-    return <div className="error-container">No dashboard data.</div>;
+    return <div className="sp-empty"><span className="sp-empty__icon">📋</span><span className="sp-empty__text">No data available.</span></div>;
   }
 
   const stats = [
-    { label: 'Total Products', value: dashboard.total_products },
-    { label: 'Active Orders', value: dashboard.active_orders },
-    { label: 'Revenue', value: dashboard.revenue },
-    { label: 'Low Stock Items', value: dashboard.low_stock_products },
+    {
+      label: 'Total Products',
+      value: dashboard.total_products,
+      icon: '▣',
+      accentColor: '#6366f1',
+      iconBg: 'rgba(99,102,241,0.1)',
+      iconColor: '#4f46e5',
+    },
+    {
+      label: 'Active Orders',
+      value: dashboard.active_orders,
+      icon: '◈',
+      accentColor: '#10b981',
+      iconBg: 'rgba(16,185,129,0.1)',
+      iconColor: '#059669',
+    },
+    {
+      label: 'Revenue',
+      value: typeof dashboard.revenue === 'number'
+        ? `₹${dashboard.revenue.toLocaleString('en-IN')}`
+        : dashboard.revenue,
+      icon: '₹',
+      accentColor: '#f59e0b',
+      iconBg: 'rgba(245,158,11,0.1)',
+      iconColor: '#d97706',
+    },
+    {
+      label: 'Low Stock Items',
+      value: dashboard.low_stock_products,
+      icon: '⚠',
+      accentColor: '#ef4444',
+      iconBg: 'rgba(239,68,68,0.1)',
+      iconColor: '#dc2626',
+    },
+  ];
+
+  const quickLinks = [
+    { label: 'Products',   icon: '▣', to: '/seller/products' },
+    { label: 'Inventory',  icon: '≡', to: '/seller/inventory' },
+    { label: 'Orders',     icon: '◈', to: '/seller/orders' },
+    { label: 'Profile',    icon: '◎', to: '/seller/profile' },
   ];
 
   return (
-    <Box sx={{ p: { xs: 1, sm: 2, md: 3 } }}>
-      <Typography variant="h4" gutterBottom>
-        Seller Dashboard
-      </Typography>
-      <Grid container spacing={3}>
-        {stats.map((item, idx) => (
-          <Grid item xs={12} sm={6} md={3} key={idx}>
-            <Card elevation={2} sx={{
-  height: '100%',
-  background: {
-    'Total Products': '#4f46e5',
-    'Active Orders': '#10b981',
-    'Revenue': '#f59e0b',
-    'Low Stock Items': '#ef4444'
-  }[item.label] ?? '#374151',
-  color: '#fff',
-  borderRadius: '12px',
-  boxShadow: '0 4px 12px rgba(0,0,0,0.15)'
-}}>
-  <CardContent>
-    <Typography variant="subtitle2" sx={{ opacity: 0.8 }}>
-      {item.label}
-    </Typography>
-    <Typography variant="h5" sx={{ fontWeight: '600', mt: 0.5 }}>
-      {item.value}
-    </Typography>
-  </CardContent>
-</Card>
+    <>
+      {/* Page header */}
+      <div className="sp-header">
+        <div>
+          <h1 className="sp-header__title">Dashboard</h1>
+          <p className="sp-header__sub">Welcome back! Here's your store overview.</p>
+        </div>
+      </div>
 
-          </Grid>
+      {/* KPI stats */}
+      <div className="sp-stats">
+        {stats.map((s) => (
+          <div
+            key={s.label}
+            className="sp-stat-card"
+            style={{ '--card-accent': s.accentColor, '--card-icon-bg': s.iconBg, '--card-icon-color': s.iconColor } as React.CSSProperties}
+          >
+            <div className="sp-stat-icon">{s.icon}</div>
+            <div className="sp-stat-label">{s.label}</div>
+            <div className="sp-stat-value">{s.value}</div>
+          </div>
         ))}
-      </Grid>
-      <Box sx={{ mt: 4, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-        <Button component={Link} to="/seller/products" variant="contained" color="primary">
-          Manage Products
-        </Button>
-        <Button component={Link} to="/seller/orders" variant="outlined" color="primary">
-          View Orders
-        </Button>
-        <Button component={Link} to="/seller/profile" variant="contained" color="secondary">
-          Edit Profile
-        </Button>
-      </Box>
-    </Box>
+      </div>
+
+      {/* Quick links */}
+      <div className="sp-card" style={{ marginBottom: 24 }}>
+        <div className="sp-card__head">
+          <h2 className="sp-card__title">Quick Actions</h2>
+        </div>
+        <div className="sp-card__body">
+          <div className="sp-quick-links">
+            {quickLinks.map((ql) => (
+              <Link key={ql.to} to={ql.to} className="sp-quick-link">
+                <span className="sp-quick-link__icon">{ql.icon}</span>
+                <span className="sp-quick-link__label">{ql.label}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Recent summary row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: 14 }}>
+        <div className="sp-card">
+          <div className="sp-card__head">
+            <h2 className="sp-card__title">Stock Alert</h2>
+            <span className="sp-badge sp-badge--red">{dashboard.low_stock_products} items</span>
+          </div>
+          <div className="sp-card__body" style={{ color: 'var(--sel-text-muted)', fontSize: '0.875rem' }}>
+            {dashboard.low_stock_products === 0
+              ? 'All products are well stocked. 🎉'
+              : `You have ${dashboard.low_stock_products} product variant(s) running low on stock.`}
+            <br /><br />
+            <Link to="/seller/inventory" className="sp-btn sp-btn--ghost sp-btn--sm">View Inventory →</Link>
+          </div>
+        </div>
+
+        <div className="sp-card">
+          <div className="sp-card__head">
+            <h2 className="sp-card__title">Orders</h2>
+            <span className="sp-badge sp-badge--blue">{dashboard.active_orders} active</span>
+          </div>
+          <div className="sp-card__body" style={{ color: 'var(--sel-text-muted)', fontSize: '0.875rem' }}>
+            {dashboard.active_orders === 0
+              ? 'No active orders right now.'
+              : `You have ${dashboard.active_orders} order(s) awaiting action.`}
+            <br /><br />
+            <Link to="/seller/orders" className="sp-btn sp-btn--ghost sp-btn--sm">View Orders →</Link>
+          </div>
+        </div>
+      </div>
+    </>
   );
 };
 

@@ -1,20 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { ThemeProvider, useTheme } from '../context/SellerThemeContext';
 import '../styles/seller-dashboard.css';
 
 const sidebarItems = [
-  { name: 'Dashboard',  path: '/seller/dashboard', icon: '🏠' },
-  { name: 'Profile',    path: '/seller/profile',   icon: '👤' },
-  { name: 'Products',   path: '/seller/products',  icon: '📦' },
-  { name: 'Inventory',  path: '/seller/inventory', icon: '📈' },
-  { name: 'Orders',     path: '/seller/orders',    icon: '🛒' },
+  { name: 'Dashboard',  path: '/seller/dashboard', icon: '▦' },
+  { name: 'Profile',    path: '/seller/profile',   icon: '◎' },
+  { name: 'Products',   path: '/seller/products',  icon: '▣' },
+  { name: 'Inventory',  path: '/seller/inventory', icon: '≡' },
+  { name: 'Orders',     path: '/seller/orders',    icon: '◈' },
 ];
 
-export default function SellerDashboardLayout({ children }: { children?: React.ReactNode }) {
+function LayoutInner({ children }: { children?: React.ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   const [isSidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 768);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -38,8 +40,12 @@ export default function SellerDashboardLayout({ children }: { children?: React.R
     if (isMobile) setSidebarOpen(false);
   };
 
+  const currentPage = sidebarItems.find((i) =>
+    location.pathname === i.path || location.pathname.startsWith(i.path + '/')
+  )?.name || 'Seller Panel';
+
   return (
-    <div className="sel-layout">
+    <div className="sel-layout" data-theme={theme}>
       {/* Mobile overlay */}
       {isMobile && isSidebarOpen && (
         <div className="sel-overlay" onClick={() => setSidebarOpen(false)} />
@@ -48,20 +54,23 @@ export default function SellerDashboardLayout({ children }: { children?: React.R
       {/* Sidebar */}
       <aside className={`sel-sidebar${isSidebarOpen ? '' : ' sel-sidebar--collapsed'}`}>
         <div className="sel-sidebar__header">
-          <span className="sel-sidebar__logo">
-            <span className="sel-sidebar__logo-icon">K</span>
+          <div className="sel-sidebar__logo">
+            <span className="sel-sidebar__logo-mark">K</span>
             <span className="sel-sidebar__logo-text">ashora</span>
-          </span>
-          <button
-            className="sel-sidebar__close"
-            onClick={() => setSidebarOpen(false)}
-            aria-label="Close sidebar"
-          >
-            ✕
-          </button>
+          </div>
+          {isMobile && (
+            <button
+              className="sel-sidebar__close"
+              onClick={() => setSidebarOpen(false)}
+              aria-label="Close sidebar"
+            >
+              ✕
+            </button>
+          )}
         </div>
 
         <nav className="sel-sidebar__nav">
+          <p className="sel-sidebar__section-label">NAVIGATION</p>
           <ul>
             {sidebarItems.map((item) => (
               <li key={item.path}>
@@ -83,7 +92,7 @@ export default function SellerDashboardLayout({ children }: { children?: React.R
         <div className="sel-sidebar__footer">
           <div className="sel-sidebar__user">
             <div className="sel-sidebar__avatar">
-              {user?.first_name?.[0] || 'S'}
+              {user?.first_name?.[0]?.toUpperCase() || 'S'}
             </div>
             <div className="sel-sidebar__user-info">
               <span className="sel-sidebar__user-name">
@@ -93,7 +102,7 @@ export default function SellerDashboardLayout({ children }: { children?: React.R
             </div>
           </div>
           <button className="sel-sidebar__logout" onClick={handleLogout}>
-            🚪 Logout
+            <span>↪</span> Logout
           </button>
         </div>
       </aside>
@@ -111,14 +120,24 @@ export default function SellerDashboardLayout({ children }: { children?: React.R
             <span />
           </button>
 
-          <div className="sel-header__title">
-            {sidebarItems.find((i) => location.pathname.startsWith(i.path))?.name || 'Seller Panel'}
-          </div>
+          <div className="sel-header__title">{currentPage}</div>
 
           <div className="sel-header__right">
-            <span className="sel-header__user">
-              {user?.first_name} {user?.last_name}
-            </span>
+            {/* Dark / Light toggle */}
+            <button
+              className="sel-theme-toggle"
+              onClick={toggleTheme}
+              aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+              title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+            >
+              {theme === 'light' ? '🌙' : '☀️'}
+            </button>
+
+            <div className="sel-header__user-chip">
+              <div className="sel-header__avatar">{user?.first_name?.[0]?.toUpperCase() || 'S'}</div>
+              <span className="sel-header__user-name">{user?.first_name} {user?.last_name}</span>
+            </div>
+
             <button className="sel-header__logout-btn" onClick={handleLogout}>
               Logout
             </button>
@@ -130,5 +149,13 @@ export default function SellerDashboardLayout({ children }: { children?: React.R
         </main>
       </div>
     </div>
+  );
+}
+
+export default function SellerDashboardLayout({ children }: { children?: React.ReactNode }) {
+  return (
+    <ThemeProvider>
+      <LayoutInner>{children}</LayoutInner>
+    </ThemeProvider>
   );
 }
