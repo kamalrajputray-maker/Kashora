@@ -1,4 +1,4 @@
-import React from 'react';
+import AdminDashboardLayout from './components/AdminDashboardLayout';
 import { BrowserRouter as Router, Routes, Route, Navigate, useParams } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -113,27 +113,40 @@ const App: React.FC = () => {
                 }
               />
 
-              {/* ── Admin & SuperAdmin Routes ── */}
-              <Route
-                path="/admin/*"
-                element={
-                  <ProtectedRoute requiredRole={ADMIN_ROLES}>
-                    <div className="admin-layout">
-                      <AdminNavigation />
-                      <div className="admin-content">
-                        <Routes>
-                          <Route path="sellers" element={<AdminSellerListPage />} />
-                          <Route path="sellers/:sellerId" element={<AdminSellerDetailPage />} />
-                          <Route path="categories" element={<AdminCategoryListPage />} />
-                          <Route path="categories/create" element={<AdminCategoryFormPage />} />
-                          <Route path="categories/:id/edit" element={<AdminCategoryFormPage />} />
-                          <Route path="*" element={<Navigate to="/admin/sellers" />} />
-                        </Routes>
-                      </div>
-                    </div>
-                  </ProtectedRoute>
-                }
-              />
+                {/* ── Admin & SuperAdmin Routes ── */}
+                <Route
+                  path="/admin/*"
+                  element={
+                    <ProtectedRoute requiredRole={ADMIN_ROLES}>
+                      <AdminDashboardLayout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route path="dashboard" element={<div>Admin Dashboard (to be implemented)</div>} />
+                  <Route path="buyers" element={<div>Buyer Management (to be implemented)</div>} />
+                  <Route path="products" element={<div>Product Management (to be implemented)</div>} />
+                  <Route path="orders" element={<div>Order Management (to be implemented)</div>} />
+                  <Route path="reports" element={<div>Reports (to be implemented)</div>} />
+                  <Route path="sellers" element={<AdminSellerListPage />} />
+                  <Route path="sellers/:sellerId" element={<AdminSellerDetailPage />} />
+                  <Route path="categories" element={<AdminCategoryListPage />} />
+                  <Route path="categories/create" element={<AdminCategoryFormPage />} />
+                  <Route path="categories/:id/edit" element={<AdminCategoryFormPage />} />
+                  <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
+                </Route>
+                {/* Super Admin specific routes */}
+                <Route
+                  path="/super-admin/*"
+                  element={
+                    <ProtectedRoute requiredRole={['SUPER_ADMIN']}>
+                      <AdminDashboardLayout />
+                    </ProtectedRoute>
+                  }
+                >
+                  <Route path="dashboard" element={<div>Super Admin Dashboard (to be implemented)</div>} />
+                  <Route path="admins" element={<div>Admin Management (to be implemented)</div>} />
+                  <Route path="*" element={<Navigate to="/super-admin/dashboard" replace />} />
+                </Route>
 
               {/* ── Redirects ── */}
               <Route path="/" element={<Navigate to="/login" />} />

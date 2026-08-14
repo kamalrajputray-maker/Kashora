@@ -3,6 +3,10 @@ from rest_framework_simplejwt.views import TokenRefreshView
 
 from apps.accounts.views import (
     AdminCreateAPIView,
+    AdminListView,
+    AdminDetailView,
+    BuyerListView,
+    BuyerDetailView,
     BuyerRegistrationAPIView,
     CurrentUserAPIView,
     LoginAPIView,
@@ -17,5 +21,12 @@ urlpatterns = [
     path("auth/logout/", LogoutAPIView.as_view(), name="auth_logout"),
     path("auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("auth/me/", CurrentUserAPIView.as_view(), name="auth_me"),
-    path("admins/", AdminCreateAPIView.as_view(), name="admin_list_create"),
+    # Admin management (Super Admin only)
+    path("admins/", AdminListView.as_view(), name="admin_list"),
+    path("admins/create/", AdminCreateAPIView.as_view(), name="admin_create"),
+    path("admins/<uuid:pk>/", AdminDetailView.as_view(), name="admin_detail"),
+    # Buyer management (Admin+)
+    path("admin/buyers/", BuyerListView.as_view(), name="buyer_list"),
+    path("admin/buyers/<uuid:pk>/", BuyerDetailView.as_view(), name="buyer_detail"),
 ]
+

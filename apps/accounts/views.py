@@ -102,3 +102,111 @@ class ProtectedAdminAPIView(generics.GenericAPIView):
 
     def get(self, request, *args, **kwargs):
         return Response({"message": "Super admin access granted."}, status=status.HTTP_200_OK)
+
+
+# ─────────────────────────────────────────────
+# ADMIN MANAGEMENT — SUPER ADMIN ONLY
+# ─────────────────────────────────────────────
+
+class AdminListView(generics.ListAPIView):
+    """
+    GET /api/v1/admins/ — List all admins (Super Admin only)
+    """
+    permission_classes = [IsSuperAdmin]
+
+    def get_serializer_class(self):
+        from apps.accounts.admin_serializers import AdminListSerializer
+        return AdminListSerializer
+
+    def get_queryset(self):
+        from apps.accounts.constants import RoleType
+        return User.objects.filter(
+            user_roles__role__name=RoleType.ADMIN.value,
+            user_roles__is_primary=True
+        ).select_related('admin_profile').order_by('-created_at')
+
+
+class AdminDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    GET/PATCH/DELETE /api/v1/admins/{id}/ — Admin detail (Super Admin only)
+    """
+    permission_classes = [IsSuperAdmin]
+
+    def get_serializer_class(self):
+        from apps.accounts.admin_serializers import AdminDetailSerializer
+        return AdminDetailSerializer
+
+    def get_queryset(self):
+        from apps.accounts.constants import RoleType
+        return User.objects.filter(
+            user_roles__role__name=RoleType.ADMIN.value,
+            user_roles__is_primary=True
+        ).select_related('admin_profile')
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        # Prevent deleting self
+        if instance == request.user:
+            return Response({"detail": "You cannot delete your own account."}, status=status.HTTP_400_BAD_REQUEST)
+        instance.delete()
+        return Response({"detail": "Admin deleted successfully."}, status=status.HTTP_200_OK)
+
+
+# ─────────────────────────────────────────────
+# BUYER MANAGEMENT — ADMIN+
+# ─────────────────────────────────────────────
+
+class BuyerListView(generics.ListAPIView):
+    """
+    GET /api/v1/admin/buyers/ — List all buyers (Admin+)
+    """
+    permission_classes = [IsAdminOrSuperAdmin]
+
+    def get_serializer_class(self):
+        from apps.accounts.admin_serializers import BuyerListSerializer
+        return BuyerListSerializer
+
+    def get_queryset(self):
+        from apps.accounts.constants import RoleType
+        from rest_framework.filters import SearchFilter
+        qs = User.objects.filter(
+            user_roles__role__name=RoleType.BUYER.value,
+            user_roles__is_primary=True
+        ).prefetch_related('orders').order_by('-created_at')
+        search = self.request.query_params.get('search', '')
+        if search:
+            from django.db.models import Q
+            qs = qs.filter(Q(phone__icontains=search) | Q(email__icontains=search) |
+                           Q(first_name__icontains=search) | Q(last_name__icontains=search))
+        status_filter = self.request.query_params.get('is_active', '')
+        if status_filter in ['true', 'false']:
+            qs = qs.filter(is_active=(status_filter == 'true'))
+        return qs
+
+
+class BuyerDetailView(generics.RetrieveUpdateAPIView):
+    """
+    GET /api/v1/admin/buyers/{id}/ — Buyer detail
+    PATCH /api/v1/admin/buyers/{id}/toggle-status/ — Activate/Deactivate
+    """
+    permission_classes = [IsAdminOrSuperAdmin]
+    http_method_names = ['get', 'patch', 'head', 'options']
+
+    def get_serializer_class(self):
+        from apps.accounts.admin_serializers import BuyerDetailSerializer
+        return BuyerDetailSerializer
+
+    def get_queryset(self):
+        from apps.accounts.constants import RoleType
+        return User.objects.filter(
+            user_roles__role__name=RoleType.BUYER.value,
+            user_roles__is_primary=True
+        ).prefetch_related('orders', 'addresses')
+
+    def partial_update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        instance.is_active = not instance.is_active
+        instance.save(update_fields=['is_active'])
+        action = 'activated' if instance.is_active else 'deactivated'
+        return Response({"detail": f"Buyer {action} successfully.", "is_active": instance.is_active})
+
