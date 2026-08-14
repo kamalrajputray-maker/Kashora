@@ -3,7 +3,8 @@
 .admin-dashboard {
   display: flex;
   min-height: 100vh;
-  background: #f5f7fa;
+  gap: 0;
+  background: #fff;
   font-family: 'Inter', sans-serif;
 }
 

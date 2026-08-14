@@ -4,7 +4,7 @@ and Buyer Management (Admin+) APIs.
 """
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
-from apps.accounts.models import AdminProfile, BuyerProfile, UserRole
+from apps.accounts.models import Role, AdminProfile, BuyerProfile, UserRole
 
 User = get_user_model()
 
@@ -89,3 +89,29 @@ class BuyerDetailSerializer(BuyerListSerializer):
 
     def get_addresses(self, obj):
         return list(obj.addresses.values('id', 'name', 'city', 'state', 'is_default'))
+
+class AdminCreateSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required=True)
+    department = serializers.CharField(required=False, allow_blank=True)
+
+    class Meta:
+        model = User
+        fields = ['id', 'phone', 'email', 'first_name', 'last_name', 'password', 'department']
+        read_only_fields = ['id']
+
+    def create(self, validated_data):
+        password = validated_data.pop('password')
+        department = validated_data.pop('department', None)
+        # Create user with ADMIN role
+        user = User.objects.create(**validated_data)
+        user.set_password(password)
+        user.role = Role.objects.get(name='ADMIN')
+        user.save()
+        # Assign primary role
+        from apps.accounts.models import UserRole
+        from apps.accounts.constants import RoleType
+        admin_role = Role.objects.get(name=RoleType.ADMIN.value)
+        UserRole.objects.create(user=user, role=admin_role, is_primary=True)
+        # Create admin profile
+        AdminProfile.objects.create(user=user, department=department)
+        return user

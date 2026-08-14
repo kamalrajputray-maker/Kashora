@@ -22,8 +22,7 @@ urlpatterns = [
     path("auth/token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("auth/me/", CurrentUserAPIView.as_view(), name="auth_me"),
     # Admin management (Super Admin only)
-    path("admins/", AdminListView.as_view(), name="admin_list"),
-    path("admins/create/", AdminCreateAPIView.as_view(), name="admin_create"),
+    path("admins/", AdminListView.as_view(), name="admin_list_create"),
     path("admins/<uuid:pk>/", AdminDetailView.as_view(), name="admin_detail"),
     # Buyer management (Admin+)
     path("admin/buyers/", BuyerListView.as_view(), name="buyer_list"),

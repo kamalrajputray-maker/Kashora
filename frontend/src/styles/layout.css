@@ -101,10 +101,10 @@
 }
 
 .admin-content {
-  margin-left: 250px;
+  margin-left: 0;
   flex: 1;
   padding: 20px;
-  max-width: calc(100% - 250px);
+  max-width: 100%;
 }
 
 /* Navigation Menu */

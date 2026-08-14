@@ -108,13 +108,17 @@ class ProtectedAdminAPIView(generics.GenericAPIView):
 # ADMIN MANAGEMENT — SUPER ADMIN ONLY
 # ─────────────────────────────────────────────
 
-class AdminListView(generics.ListAPIView):
+class AdminListView(generics.ListCreateAPIView):
     """
-    GET /api/v1/admins/ — List all admins (Super Admin only)
-    """
+     GET /api/v1/admins/ — List all admins (Super Admin only)
+     POST /api/v1/admins/ — Create admin (Super Admin only)
+     """
     permission_classes = [IsSuperAdmin]
 
     def get_serializer_class(self):
+        if self.request.method == 'POST':
+            from apps.accounts.admin_serializers import AdminCreateSerializer
+            return AdminCreateSerializer
         from apps.accounts.admin_serializers import AdminListSerializer
         return AdminListSerializer
 

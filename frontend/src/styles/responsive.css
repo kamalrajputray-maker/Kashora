@@ -1,0 +1,8 @@
+/* Fluid typography */
+html { font-size: clamp(14px, 1vw + 1vh, 18px); }
+
+/* Ensure images never overflow */
+img, picture, video { max-width: 100%; height: auto; }
+
+/* Mobile‑first container */
+.container { width: 100%; max-width: 1200px; margin: 0 auto; padding: 0 1rem; }

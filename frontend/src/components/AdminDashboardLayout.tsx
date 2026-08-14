@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import './admin-dashboard.css';
+import '../styles/admin-dashboard.css';
 
 const sidebarItems = [
   { name: 'Dashboard', path: '/admin/dashboard', roles: ['ADMIN', 'SUPER_ADMIN'] },
@@ -22,7 +22,7 @@ export default function AdminDashboardLayout() {
   return (
     <div className="admin-dashboard">
       <aside className="admin-sidebar">
-        <div className="logo">Meesho Admin</div>
+        <div className="logo">Keshro Admin</div>
         <nav>
           <ul>
             {filteredItems.map(item => (

@@ -17,7 +17,7 @@ export default function AdminDashboardPage() {
   return (
     <Grid container spacing={3}>
       {stats.map((item, idx) => (
-        <Grid item xs={12} sm={6} md={3} key={idx}>
+        <Grid item xs={12} sm={6} md={3} lg={2} key={idx}>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>{item.label}</Typography>
