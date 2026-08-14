@@ -12,6 +12,7 @@ from apps.accounts.views import (
     LoginAPIView,
     LogoutAPIView,
     SellerRegistrationAPIView,
+    VerificationDocumentViewSet,
 )
 
 urlpatterns = [
@@ -27,5 +28,8 @@ urlpatterns = [
     # Buyer management (Admin+)
     path("admin/buyers/", BuyerListView.as_view(), name="buyer_list"),
     path("admin/buyers/<uuid:pk>/", BuyerDetailView.as_view(), name="buyer_detail"),
+    # Verification Document endpoints
+    path("verification-documents/", VerificationDocumentViewSet.as_view({"get": "list", "post": "create"}), name="verification_document_list"),
+    path("verification-documents/<uuid:pk>/", VerificationDocumentViewSet.as_view({"get": "retrieve", "patch": "partial_update", "delete": "destroy"}), name="verification_document_detail"),
 ]
 

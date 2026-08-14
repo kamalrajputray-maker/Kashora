@@ -161,6 +161,20 @@ class SellerProfile(models.Model):
     rejected_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="rejected_sellers")
     rejected_at = models.DateTimeField(null=True, blank=True)
     
+    def update_kyc_status_from_document(self):
+        latest_doc = self.verification_documents.order_by('-uploaded_at').first()
+        if latest_doc:
+            if latest_doc.status == "APPROVED":
+                self.kyc_status = "APPROVED"
+            elif latest_doc.status == "REJECTED":
+                self.kyc_status = "REJECTED"
+            else:
+                self.kyc_status = "PENDING"
+            self.save(update_fields=["kyc_status"])
+        else:
+            self.kyc_status = "PENDING"
+            self.save(update_fields=["kyc_status"])
+    
     # Timestamps
     created_at = models.DateTimeField(default=timezone.now)
     updated_at = models.DateTimeField(auto_now=True)
@@ -210,5 +224,39 @@ class Address(models.Model):
     class Meta:
         db_table = "addresses"
 
+
+class VerificationDocument(models.Model):
+    STATUS_CHOICES = [
+        ("PENDING", "Pending"),
+        ("APPROVED", "Approved"),
+        ("REJECTED", "Rejected"),
+    ]
+    seller = models.ForeignKey(SellerProfile, on_delete=models.CASCADE, related_name="verification_documents")
+    document = models.FileField(upload_to="kyc_documents/", max_length=255)
+    uploaded_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="PENDING")
+    rejection_reason = models.TextField(blank=True, null=True)
+
+    class Meta:
+        db_table = "verification_documents"
+        indexes = [
+            models.Index(fields=["status"]),
+            models.Index(fields=["uploaded_at"]),
+        ]
+
     def __str__(self):
-        return f"{self.user.phone} - {self.city}"
+        return f"VerificationDocument: {self.seller.user.phone} ({self.status})"
+
+    def approve(self):
+        self.status = "APPROVED"
+        self.rejection_reason = ""
+        self.save(update_fields=["status", "rejection_reason"])
+        self.seller.update_kyc_status_from_document()
+
+    def reject(self, reason=""):
+        self.status = "REJECTED"
+        self.rejection_reason = reason
+        self.save(update_fields=["status", "rejection_reason"])
+        self.seller.update_kyc_status_from_document()
+
+

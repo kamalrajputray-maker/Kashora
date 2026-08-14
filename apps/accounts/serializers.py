@@ -6,7 +6,7 @@ from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from apps.accounts.constants import RoleType
-from apps.accounts.models import Address, AdminProfile, BuyerProfile, Permission, Role, SellerProfile, UserRole
+from apps.accounts.models import Address, AdminProfile, BuyerProfile, Permission, Role, SellerProfile, UserRole, VerificationDocument
 
 User = get_user_model()
 
@@ -232,3 +232,10 @@ class AddressSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["id", "user", "created_at", "updated_at"]
+
+
+class VerificationDocumentSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VerificationDocument
+        fields = ["id", "seller", "document", "uploaded_at", "status", "rejection_reason"]
+        read_only_fields = ["id", "uploaded_at", "seller"]

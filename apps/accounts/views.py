@@ -7,7 +7,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from apps.accounts.constants import RoleType
 from apps.accounts.models import AdminProfile, BuyerProfile, SellerProfile, Role, UserRole
 from apps.accounts.permissions import IsAdminOrSuperAdmin, IsSuperAdmin
-from apps.accounts.serializers import AdminCreateSerializer, BuyerRegistrationSerializer, LoginSerializer, SellerRegistrationSerializer, UserSerializer
+from apps.accounts.serializers import AdminCreateSerializer, BuyerRegistrationSerializer, LoginSerializer, SellerRegistrationSerializer, UserSerializer, VerificationDocumentSerializer
 
 User = get_user_model()
 
@@ -213,4 +213,36 @@ class BuyerDetailView(generics.RetrieveUpdateAPIView):
         instance.save(update_fields=['is_active'])
         action = 'activated' if instance.is_active else 'deactivated'
         return Response({"detail": f"Buyer {action} successfully.", "is_active": instance.is_active})
+
+# -----------------------------------------------------------------
+# Verification Document API
+# -----------------------------------------------------------------
+from rest_framework import viewsets, permissions
+from apps.accounts.models import VerificationDocument
+from apps.accounts.serializers import VerificationDocumentSerializer
+
+class IsSellerOrAdmin(permissions.BasePermission):
+    """Allow sellers to create their own documents and admins to view/modify any."""
+    def has_permission(self, request, view):
+        return request.user and request.user.is_authenticated
+
+    def has_object_permission(self, request, view, obj):
+        if getattr(request.user, 'role', None) == "SELLER":
+            return obj.seller.user == request.user
+        return request.user.role in ["ADMIN", "SUPERADMIN"]
+
+class VerificationDocumentViewSet(viewsets.ModelViewSet):
+    queryset = VerificationDocument.objects.all().select_related('seller')
+    serializer_class = VerificationDocumentSerializer
+    permission_classes = [permissions.IsAuthenticated, IsSellerOrAdmin]
+
+    def get_queryset(self):
+        user = self.request.user
+        if getattr(user, 'role', None) == "SELLER":
+            return VerificationDocument.objects.filter(seller__user=user)
+        return super().get_queryset()
+
+    def perform_create(self, serializer):
+        seller_profile = getattr(self.request.user, 'seller_profile', None)
+        serializer.save(seller=seller_profile)
 

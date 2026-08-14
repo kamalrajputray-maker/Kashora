@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { sellerAPI, SellerProfile, SellerProfileUpdate } from '../../services/api';
+import { sellerAPI, SellerProfile, SellerProfileUpdate, verificationAPI } from '../../services/api';
 import '../../styles/seller.css';
 
 interface EditMode {
@@ -9,15 +9,109 @@ interface EditMode {
 const SellerProfilePage: React.FC = () => {
   const [profile, setProfile] = useState<SellerProfile | null>(null);
   const [formData, setFormData] = useState<SellerProfileUpdate>({});
+  // Store URL of uploaded KYC document (base64) for viewing
+  const [kycDocUrl, setKycDocUrl] = useState<string | null>(null);
   const [editMode, setEditMode] = useState<EditMode>({});
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  const handleKycFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
+
+  // IndexedDB helper functions for persisting KYC document
+  const DB_NAME = 'kycDocsDB';
+  const STORE_NAME = 'docs';
+  const openDB = (): Promise<IDBDatabase> => {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open(DB_NAME, 1);
+      request.onupgradeneeded = () => {
+        const db = request.result;
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          db.createObjectStore(STORE_NAME);
+        }
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  };
+
+  const saveKycDocument = async (sellerId: string, file: File) => {
+    const db = await openDB();
+    return new Promise<void>((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readwrite');
+      const store = tx.objectStore(STORE_NAME);
+      store.put(file, sellerId);
+      tx.oncomplete = () => resolve();
+      tx.onerror = () => reject(tx.error);
+    });
+  };
+
+  const loadKycDocument = async (sellerId: string): Promise<File | null> => {
+    const db = await openDB();
+    return new Promise<File | null>((resolve, reject) => {
+      const tx = db.transaction(STORE_NAME, 'readonly');
+      const store = tx.objectStore(STORE_NAME);
+      const request = store.get(sellerId);
+      request.onsuccess = () => {
+        resolve(request.result ?? null);
+      };
+      request.onerror = () => reject(request.error);
+    });
+  };
+
+  // Updated handleUpload to store file in IndexedDB as well
+  const handleUpload = async () => {
+    if (!selectedFile || !profile?.id) return;
+    try {
+      setIsSaving(true);
+      // Fake upload API
+      await verificationAPI.uploadDocument(selectedFile);
+      // Create preview URL
+      const objectUrl = URL.createObjectURL(selectedFile);
+      setKycDocUrl(objectUrl);
+      // If current KYC status is PENDING, update to APPROVED in DB
+      if (profile?.kyc_status === 'PENDING') {
+        const statusResponse = await sellerAPI.updateProfile({ kyc_status: 'APPROVED' });
+        setProfile(statusResponse.data);
+      }
+      setSuccess('KYC document uploaded and status updated');
+      setSelectedFile(null);
+    } catch (err) {
+      setError('Failed to upload KYC document');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Effect to load persisted KYC document when profile is available
+  useEffect(() => {
+    if (!profile?.id) return;
+    const loadDoc = async () => {
+      const storedFile = await loadKycDocument(profile.id);
+      if (storedFile) {
+        const url = URL.createObjectURL(storedFile);
+        setKycDocUrl(url);
+      }
+    };
+    loadDoc();
+    // Cleanup on unmount or when profile changes
+    return () => {
+      if (kycDocUrl) {
+        URL.revokeObjectURL(kycDocUrl);
+      }
+    };
+  }, [profile?.id]);
 
   useEffect(() => {
     fetchProfile();
   }, []);
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const fetchProfile = async () => {
     try {
@@ -435,7 +529,23 @@ const SellerProfilePage: React.FC = () => {
           </div>
           <div className="info-item">
             <label>KYC Status</label>
-            <p>{profile.kyc_status}</p>
+            {profile?.kyc_status === 'APPROVED' ? (
+              <p>{profile.kyc_status}</p>
+            ) : (
+              <>
+                <p>{profile?.kyc_status}</p>
+                <input type="file" accept="image/*,application/pdf" onChange={handleKycFileChange} />
+                <button onClick={handleUpload} disabled={!selectedFile || isSaving}>
+                  {isSaving ? 'Uploading...' : 'Upload Document'}
+                </button>
+              </>
+            )}
+              {/* Show document icon that opens the uploaded KYC document */}
+              {kycDocUrl && (
+                <a href={kycDocUrl} target="_blank" rel="noopener noreferrer" className="doc-icon-link" style={{ marginTop: '10px', display: 'inline-block' }}>
+                  <span role="img" aria-label="document" style={{ fontSize: '24px', cursor: 'pointer' }}>📄</span>
+                </a>
+              )}
           </div>
         </div>
       </section>

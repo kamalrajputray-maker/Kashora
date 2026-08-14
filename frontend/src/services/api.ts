@@ -166,6 +166,7 @@ export interface SellerProfileUpdate {
   state?: string;
   postal_code?: string;
   country?: string;
+  kyc_status?: string;
 }
 
 export interface SellerDashboard extends SellerProfile {
@@ -200,6 +201,17 @@ export const sellerAPI = {
 
   getDashboard: () =>
     apiClient.get<SellerDashboard>('seller/dashboard/'),
+};
+
+export const verificationAPI = {
+  uploadDocument: (file: File) => {
+    // Fake API: always succeed
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        resolve({ data: { message: "Document uploaded successfully (fake)." } });
+      }, 100);
+    });
+  },
 };
 
 // ========== ADMIN SELLER APIS ==========

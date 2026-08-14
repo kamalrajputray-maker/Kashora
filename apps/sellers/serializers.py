@@ -89,7 +89,11 @@ class SellerProfileUpdateSerializer(serializers.ModelSerializer):
             "state",
             "postal_code",
             "country",
+            # KYC status (allow update)
+            "kyc_status",
         ]
+        # Removed kyc_status from read_only_fields to allow update
+        read_only_fields = []
 
     def validate_business_email(self, value):
         """Validate business email is unique"""

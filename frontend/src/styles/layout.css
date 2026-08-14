@@ -103,7 +103,7 @@
 .admin-content {
   margin-left: 0;
   flex: 1;
-  padding: 20px;
+  /* padding: 20px; */
   max-width: 100%;
 }
 
@@ -138,6 +138,7 @@
 
 /* Responsive */
 @media (max-width: 768px) {
+
   .seller-nav,
   .admin-nav {
     width: 200px;
@@ -160,6 +161,7 @@
 }
 
 @media (max-width: 600px) {
+
   .seller-nav,
   .admin-nav {
     width: 180px;
