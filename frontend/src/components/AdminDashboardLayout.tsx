@@ -1,23 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { AdminThemeProvider, useAdminTheme } from '../context/AdminThemeContext';
 import '../styles/admin-dashboard.css';
 
 const sidebarItems = [
-  { name: 'Dashboard',   path: '/admin/dashboard',    icon: '🏠', roles: ['ADMIN', 'SUPER_ADMIN'] },
-  { name: 'Sellers',     path: '/admin/sellers',       icon: '🏪', roles: ['ADMIN', 'SUPER_ADMIN'] },
-  { name: 'Buyers',      path: '/admin/buyers',        icon: '👥', roles: ['ADMIN', 'SUPER_ADMIN'] },
-  { name: 'Categories',  path: '/admin/categories',    icon: '🗂️',  roles: ['ADMIN', 'SUPER_ADMIN'] },
-  { name: 'Products',    path: '/admin/products',      icon: '📦', roles: ['ADMIN', 'SUPER_ADMIN'] },
-  { name: 'Orders',      path: '/admin/orders',        icon: '🛒', roles: ['ADMIN', 'SUPER_ADMIN'] },
-  { name: 'Reports',     path: '/admin/reports',       icon: '📊', roles: ['ADMIN', 'SUPER_ADMIN'] },
-  { name: 'Admins',      path: '/super-admin/admins',  icon: '🔐', roles: ['SUPER_ADMIN'] },
+  { name: 'Dashboard',   path: '/admin/dashboard',    icon: '▦', roles: ['ADMIN', 'SUPER_ADMIN'] },
+  { name: 'Sellers',     path: '/admin/sellers',       icon: '▣', roles: ['ADMIN', 'SUPER_ADMIN'] },
+  { name: 'Buyers',      path: '/admin/buyers',        icon: '◎', roles: ['ADMIN', 'SUPER_ADMIN'] },
+  { name: 'Categories',  path: '/admin/categories',    icon: '◈', roles: ['ADMIN', 'SUPER_ADMIN'] },
+  { name: 'Products',    path: '/admin/products',      icon: '≡', roles: ['ADMIN', 'SUPER_ADMIN'] },
+  { name: 'Orders',      path: '/admin/orders',        icon: '◈', roles: ['ADMIN', 'SUPER_ADMIN'] },
+  { name: 'Reports',     path: '/admin/reports',       icon: '◎', roles: ['ADMIN', 'SUPER_ADMIN'] },
+  { name: 'Admins',      path: '/super-admin/admins',  icon: '▣', roles: ['SUPER_ADMIN'] },
 ];
 
-export default function AdminDashboardLayout({ children }: { children?: React.ReactNode }) {
+function AdminLayoutInner({ children }: { children?: React.ReactNode }) {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useAdminTheme();
 
   // Default open on desktop, closed on mobile
   const [isSidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 768);
@@ -48,8 +50,12 @@ export default function AdminDashboardLayout({ children }: { children?: React.Re
     if (isMobile) setSidebarOpen(false);
   };
 
+  const currentPage = sidebarItems.find((i) =>
+    location.pathname === i.path || location.pathname.startsWith(i.path + '/')
+  )?.name || 'Admin Panel';
+
   return (
-    <div className="adm-layout">
+    <div className="adm-layout" data-adm-theme={theme}>
       {/* Overlay for mobile */}
       {isMobile && isSidebarOpen && (
         <div className="adm-overlay" onClick={() => setSidebarOpen(false)} />
@@ -58,20 +64,23 @@ export default function AdminDashboardLayout({ children }: { children?: React.Re
       {/* Sidebar */}
       <aside className={`adm-sidebar${isSidebarOpen ? '' : ' adm-sidebar--collapsed'}`}>
         <div className="adm-sidebar__header">
-          <span className="adm-sidebar__logo">
-            <span className="adm-sidebar__logo-icon">K</span>
-            <span className="adm-sidebar__logo-text">ashora</span>
-          </span>
-          <button
-            className="adm-sidebar__close"
-            onClick={() => setSidebarOpen(false)}
-            aria-label="Close sidebar"
-          >
-            ✕
-          </button>
+          <div className="adm-sidebar__logo">
+            <span className="adm-sidebar__logo-mark">K</span>
+            <span className="adm-sidebar__logo-text">ashora Admin</span>
+          </div>
+          {isMobile && (
+            <button
+              className="adm-sidebar__close"
+              onClick={() => setSidebarOpen(false)}
+              aria-label="Close sidebar"
+            >
+              ✕
+            </button>
+          )}
         </div>
 
         <nav className="adm-sidebar__nav">
+          <p className="adm-sidebar__section-label">MENU</p>
           <ul>
             {filteredItems.map((item) => (
               <li key={item.path}>
@@ -93,17 +102,17 @@ export default function AdminDashboardLayout({ children }: { children?: React.Re
         <div className="adm-sidebar__footer">
           <div className="adm-sidebar__user">
             <div className="adm-sidebar__avatar">
-              {user?.first_name?.[0] || 'A'}
+              {user?.first_name?.[0]?.toUpperCase() || 'A'}
             </div>
             <div className="adm-sidebar__user-info">
               <span className="adm-sidebar__user-name">
                 {user?.first_name} {user?.last_name}
               </span>
-              <span className="adm-sidebar__user-role">{user?.role}</span>
+              <span className="adm-sidebar__user-role">{user?.role?.replace('_', ' ')}</span>
             </div>
           </div>
           <button className="adm-sidebar__logout" onClick={handleLogout}>
-            🚪 Logout
+            <span>🚪</span> Logout
           </button>
         </div>
       </aside>
@@ -123,16 +132,25 @@ export default function AdminDashboardLayout({ children }: { children?: React.Re
           </button>
 
           <div className="adm-header__title">
-            {filteredItems.find((i) => location.pathname.startsWith(i.path))?.name || 'Admin'}
+            {currentPage}
           </div>
 
           <div className="adm-header__right">
-            <span className="adm-header__user">
-              {user?.first_name} {user?.last_name}
-            </span>
-            <button className="adm-header__logout-btn" onClick={handleLogout}>
-              Logout
+            {/* Dark / Light toggle */}
+            <button
+              className="adm-theme-toggle"
+              onClick={toggleTheme}
+              aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+              title={theme === 'light' ? 'Switch to dark mode' : 'Switch to light mode'}
+            >
+              {theme === 'light' ? '🌙' : '☀️'}
             </button>
+
+            <div className="adm-header__user-chip">
+              <span className="adm-header__user-name">
+                {user?.first_name} {user?.last_name}
+              </span>
+            </div>
           </div>
         </header>
 
@@ -142,5 +160,13 @@ export default function AdminDashboardLayout({ children }: { children?: React.Re
         </main>
       </div>
     </div>
+  );
+}
+
+export default function AdminDashboardLayout({ children }: { children?: React.ReactNode }) {
+  return (
+    <AdminThemeProvider>
+      <AdminLayoutInner>{children}</AdminLayoutInner>
+    </AdminThemeProvider>
   );
 }
