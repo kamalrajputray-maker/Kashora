@@ -5,59 +5,9 @@ import {
   sellerAttributeAPI, sellerVariantAPI, sellerImageAPI,
   ProductAttribute, ProductVariant, ProductImage,
 } from '../../services/api';
-import '../../styles/seller.css';
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Inline styles — premium Meesho / Amazon–style
-// ─────────────────────────────────────────────────────────────────────────────
-const S = {
-  page: { minHeight: '100vh', background: '#f0f2f5', fontFamily: "'Inter', 'Segoe UI', sans-serif" },
-  header: {
-    background: 'linear-gradient(135deg, #6c63ff 0%, #e040fb 100%)',
-    color: '#fff', padding: '1.5rem 2rem',
-    display: 'flex', alignItems: 'center', gap: '1rem',
-    boxShadow: '0 4px 20px rgba(108,99,255,0.3)',
-  },
-  backBtn: {
-    background: 'rgba(255,255,255,0.15)', border: 'none', color: '#fff',
-    padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', fontSize: '0.9rem',
-  },
-  body: { display: 'grid', gridTemplateColumns: '1fr 380px', gap: '1.5rem', padding: '2rem', maxWidth: '1400px', margin: '0 auto' },
-  card: { background: '#fff', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 2px 12px rgba(0,0,0,0.06)' },
-  sectionTitle: { fontSize: '1rem', fontWeight: '700', color: '#1a1a2e', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' },
-  label: { display: 'block', fontSize: '0.8rem', fontWeight: '600', color: '#555', marginBottom: '0.4rem', textTransform: 'uppercase' as const, letterSpacing: '0.04em' },
-  input: { width: '100%', padding: '0.6rem 0.8rem', border: '1.5px solid #e2e8f0', borderRadius: '8px', fontSize: '0.95rem', outline: 'none', transition: 'border-color 0.2s', boxSizing: 'border-box' as const },
-  inputFocus: { borderColor: '#6c63ff' },
-  textarea: { width: '100%', padding: '0.6rem 0.8rem', border: '1.5px solid #e2e8f0', borderRadius: '8px', fontSize: '0.95rem', outline: 'none', resize: 'vertical' as const, minHeight: '100px', boxSizing: 'border-box' as const },
-  select: { width: '100%', padding: '0.6rem 0.8rem', border: '1.5px solid #e2e8f0', borderRadius: '8px', fontSize: '0.95rem', outline: 'none', background: '#fff', boxSizing: 'border-box' as const },
-  row: { display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' },
-  field: { marginBottom: '1rem' },
-  error: { color: '#ef4444', fontSize: '0.78rem', marginTop: '0.25rem' },
-  apiError: { background: '#fef2f2', border: '1px solid #fca5a5', color: '#b91c1c', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.875rem' },
-  primaryBtn: { background: 'linear-gradient(135deg, #6c63ff, #e040fb)', color: '#fff', border: 'none', padding: '0.8rem 1.5rem', borderRadius: '8px', fontSize: '0.95rem', fontWeight: '600', cursor: 'pointer', width: '100%', transition: 'opacity 0.2s' },
-  secondaryBtn: { background: '#f1f5f9', color: '#475569', border: '1.5px solid #e2e8f0', padding: '0.6rem 1rem', borderRadius: '8px', fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer' },
-  dangerBtn: { background: '#fee2e2', color: '#dc2626', border: '1.5px solid #fca5a5', padding: '0.4rem 0.75rem', borderRadius: '6px', fontSize: '0.8rem', cursor: 'pointer' },
-  successBtn: { background: '#d1fae5', color: '#065f46', border: '1.5px solid #6ee7b7', padding: '0.4rem 0.75rem', borderRadius: '6px', fontSize: '0.8rem', cursor: 'pointer' },
-  chip: { display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: '#ede9fe', color: '#7c3aed', padding: '0.3rem 0.6rem', borderRadius: '20px', fontSize: '0.8rem', fontWeight: '500', margin: '0.2rem' },
-  chipRemove: { background: 'none', border: 'none', color: '#7c3aed', cursor: 'pointer', fontSize: '1rem', lineHeight: 1, padding: '0 0.1rem' },
-  badge: (active: boolean) => ({
-    display: 'inline-block', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700',
-    background: active ? '#d1fae5' : '#fee2e2', color: active ? '#065f46' : '#dc2626',
-  }),
-  variantTable: { width: '100%', borderCollapse: 'collapse' as const, fontSize: '0.85rem' },
-  th: { padding: '0.6rem 0.75rem', background: '#f8fafc', borderBottom: '2px solid #e2e8f0', textAlign: 'left' as const, fontWeight: '700', color: '#475569', fontSize: '0.78rem', textTransform: 'uppercase' as const },
-  td: { padding: '0.5rem 0.75rem', borderBottom: '1px solid #f1f5f9', verticalAlign: 'middle' as const },
-  smallInput: { padding: '0.35rem 0.5rem', border: '1.5px solid #e2e8f0', borderRadius: '6px', fontSize: '0.85rem', width: '100%', boxSizing: 'border-box' as const },
-  divider: { border: 'none', borderTop: '1px solid #e2e8f0', margin: '1.25rem 0' },
-  statusPill: (s: string) => ({
-    display: 'inline-block', padding: '3px 10px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: '700',
-    background: s === 'ACTIVE' ? '#d1fae5' : s === 'DRAFT' ? '#fef9c3' : s === 'PENDING' ? '#dbeafe' : '#fee2e2',
-    color: s === 'ACTIVE' ? '#065f46' : s === 'DRAFT' ? '#854d0e' : s === 'PENDING' ? '#1e40af' : '#dc2626',
-  }),
-};
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Main Component
+// Main Component (Refactored to use sp- CSS classes for Dark Mode support)
 // ─────────────────────────────────────────────────────────────────────────────
 interface FormState {
   name: string; slug: string; description: string; brand: string;
@@ -71,6 +21,15 @@ const EMPTY: FormState = {
   shipping_charge: '0', returnable: true, return_window_days: '7', status: 'DRAFT',
 };
 function slugify(s: string) { return s.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, ''); }
+
+const badgeClass = (status: string) => {
+  const s = status.toUpperCase();
+  if (s === 'ACTIVE' || s === 'APPROVED') return 'sp-badge sp-badge--green';
+  if (s === 'PENDING') return 'sp-badge sp-badge--yellow';
+  if (s === 'REJECTED' || s === 'ARCHIVED') return 'sp-badge sp-badge--red';
+  if (s === 'DRAFT') return 'sp-badge sp-badge--blue';
+  return 'sp-badge';
+};
 
 const SellerProductFormPage: React.FC<{ mode?: 'create' | 'edit' }> = ({ mode = 'create' }) => {
   const { id } = useParams<{ id?: string }>();
@@ -106,10 +65,8 @@ const SellerProductFormPage: React.FC<{ mode?: 'create' | 'edit' }> = ({ mode = 
   const [imageLoading, setImageLoading] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
 
-  // Load categories
   useEffect(() => { catalogAPI.listCategories().then(r => setCategories(r.data)); }, []);
 
-  // Load product if editing
   useEffect(() => {
     if (isEdit && id) {
       setIsLoadingProduct(true);
@@ -131,7 +88,6 @@ const SellerProductFormPage: React.FC<{ mode?: 'create' | 'edit' }> = ({ mode = 
     } catch { /* ignore */ }
   }, []);
 
-  // Load attributes, variants, and images when we have a product id
   const loadAttributesAndVariants = useCallback(async (pid: string) => {
     setAttrLoading(true);
     setVariantLoading(true);
@@ -176,9 +132,7 @@ const SellerProductFormPage: React.FC<{ mode?: 'create' | 'edit' }> = ({ mode = 
     try {
       await sellerImageAPI.update(savedProductId, imageId, { is_primary: true });
       await loadImages(savedProductId);
-    } catch (err) {
-      setImageError('Failed to change primary image.');
-    }
+    } catch (err) { setImageError('Failed to change primary image.'); }
   };
 
   const handleUpdateSortOrder = async (imageId: string, newOrder: number) => {
@@ -186,9 +140,7 @@ const SellerProductFormPage: React.FC<{ mode?: 'create' | 'edit' }> = ({ mode = 
     try {
       await sellerImageAPI.update(savedProductId, imageId, { sort_order: newOrder });
       await loadImages(savedProductId);
-    } catch (err) {
-      setImageError('Failed to update sort order.');
-    }
+    } catch (err) { setImageError('Failed to update sort order.'); }
   };
 
   const handleDeleteImage = async (imageId: string) => {
@@ -196,13 +148,9 @@ const SellerProductFormPage: React.FC<{ mode?: 'create' | 'edit' }> = ({ mode = 
     try {
       await sellerImageAPI.delete(savedProductId, imageId);
       await loadImages(savedProductId);
-    } catch (err) {
-      setImageError('Failed to delete image.');
-    }
+    } catch (err) { setImageError('Failed to delete image.'); }
   };
 
-
-  // ─── Product form handlers ───────────────────────────────────────────────
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
     const val = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
@@ -244,7 +192,6 @@ const SellerProductFormPage: React.FC<{ mode?: 'create' | 'edit' }> = ({ mode = 
     } finally { setIsSaving(false); }
   };
 
-  // ─── Attribute handlers ──────────────────────────────────────────────────
   const addAttribute = async () => {
     if (!savedProductId || !newAttrName.trim()) return;
     try {
@@ -280,7 +227,6 @@ const SellerProductFormPage: React.FC<{ mode?: 'create' | 'edit' }> = ({ mode = 
     setAttributes(prev => prev.map(a => a.id === attrId ? { ...a, values: a.values.filter(v => v.id !== valueId) } : a));
   };
 
-  // ─── Variant generate handler ────────────────────────────────────────────
   const handleGenerate = async () => {
     if (!savedProductId) return;
     const groups = attributes.map(a => (selectedGroups[a.id] || a.values.map(v => v.id)));
@@ -290,13 +236,13 @@ const SellerProductFormPage: React.FC<{ mode?: 'create' | 'edit' }> = ({ mode = 
     try {
       const res = await sellerVariantAPI.generate(savedProductId, { base_price: generatePrice, sku_prefix: generatePrefix, attribute_value_groups: groups });
       setVariantSuccess(`Generated ${res.data.created} variants. ${res.data.skipped} skipped (duplicates).`);
+      setTimeout(() => setVariantSuccess(null), 4000);
       await loadAttributesAndVariants(savedProductId);
     } catch (err: any) {
       setVariantApiError(err.response?.data?.detail || 'Failed to generate variants.');
     } finally { setVariantLoading(false); }
   };
 
-  // ─── Variant inline edit handlers ────────────────────────────────────────
   const handleVariantEdit = (variantId: string, field: string, value: any) => {
     setEditingVariant(prev => ({ ...prev, [variantId]: { ...prev[variantId], [field]: value } }));
   };
@@ -310,6 +256,7 @@ const SellerProductFormPage: React.FC<{ mode?: 'create' | 'edit' }> = ({ mode = 
       setEditingVariant(prev => { const n = { ...prev }; delete n[variantId]; return n; });
       await loadAttributesAndVariants(savedProductId);
       setVariantSuccess('Variant updated.');
+      setTimeout(() => setVariantSuccess(null), 3000);
     } catch (err: any) {
       setVariantApiError(err.response?.data?.sku?.[0] || err.response?.data?.detail || 'Failed to update variant.');
     }
@@ -327,383 +274,325 @@ const SellerProductFormPage: React.FC<{ mode?: 'create' | 'edit' }> = ({ mode = 
     setVariants(prev => prev.filter(v => v.id !== variantId));
   };
 
-  if (isLoadingProduct) return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
-      <div style={{ textAlign: 'center' }}><div style={{ fontSize: '2rem', marginBottom: '1rem' }}>⏳</div><p>Loading product...</p></div>
-    </div>
-  );
+  if (isLoadingProduct) return <div className="sp-loading">Loading product...</div>;
 
   return (
-    <div style={S.page}>
-      {/* Header */}
-      <div style={S.header}>
-        <button style={S.backBtn} onClick={() => navigate('/seller/products')}>← Back</button>
+    <>
+      <div className="sp-header">
         <div>
-          <h1 style={{ margin: 0, fontSize: '1.3rem', fontWeight: '700' }}>
-            {isEdit ? '✏️ Edit Product' : '✨ Create New Product'}
+          <button className="sp-btn sp-btn--ghost sp-btn--sm" onClick={() => navigate('/seller/products')} style={{ marginBottom: 12 }}>
+            ← Back
+          </button>
+          <h1 className="sp-header__title">
+            {isEdit ? 'Edit Product' : 'Create New Product'}
           </h1>
-          {isEdit && savedProductId && <p style={{ margin: 0, fontSize: '0.8rem', opacity: 0.8 }}>ID: {savedProductId}</p>}
+          {isEdit && savedProductId && <p className="sp-header__sub">Product ID: {savedProductId}</p>}
         </div>
         {isEdit && (
-          <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
-            <span style={S.statusPill(form.status)}>{form.status}</span>
+          <div className="sp-header__actions">
+            <span className={badgeClass(form.status)} style={{ padding: '6px 12px', fontSize: '0.85rem' }}>{form.status}</span>
           </div>
         )}
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div style={S.body}>
-          {/* LEFT COLUMN */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            {/* Basic Info */}
-            <div style={S.card}>
-              <p style={S.sectionTitle}>📦 Basic Information</p>
-              {apiError && <div style={S.apiError}>{apiError}</div>}
-
-              <div style={S.field}>
-                <label style={S.label}>Product Name *</label>
-                <input style={S.input} name="name" value={form.name} onChange={handleChange} placeholder="e.g. Women's Floral Kurti" />
-                {errors.name && <p style={S.error}>{errors.name}</p>}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '24px', alignItems: 'start' }} className="responsive-grid">
+          {/* Main Info */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div className="sp-card">
+              <div className="sp-card__head">
+                <h2 className="sp-card__title">📦 Basic Information</h2>
               </div>
-
-              <div style={S.row}>
-                <div>
-                  <label style={S.label}>Brand *</label>
-                  <input style={S.input} name="brand" value={form.brand} onChange={handleChange} placeholder="e.g. BIBA" />
-                  {errors.brand && <p style={S.error}>{errors.brand}</p>}
-                </div>
-                <div>
-                  <label style={S.label}>Category *</label>
-                  <select style={S.select} name="category" value={form.category} onChange={handleChange}>
-                    <option value="">Select category</option>
-                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
-                  {errors.category && <p style={S.error}>{errors.category}</p>}
-                </div>
-              </div>
-
-              <div style={S.field}>
-                <label style={S.label}>Description *</label>
-                <textarea style={S.textarea} name="description" value={form.description} onChange={handleChange} placeholder="Describe the product, materials, care instructions..." />
-                {errors.description && <p style={S.error}>{errors.description}</p>}
-              </div>
-
-              <div style={S.field}>
-                <label style={S.label}>URL Slug</label>
-                <input style={S.input} name="slug" value={form.slug} onChange={e => { setSlugManual(true); setForm(p => ({ ...p, slug: e.target.value })); }} placeholder="auto-generated-from-name" />
-              </div>
-            </div>
-
-            {/* Pricing */}
-            <div style={S.card}>
-              <p style={S.sectionTitle}>💰 Pricing & Tax</p>
-              <div style={S.row}>
-                <div>
-                  <label style={S.label}>Base Price (₹) *</label>
-                  <input style={S.input} name="base_price" value={form.base_price} onChange={handleChange} type="number" min="0" step="0.01" placeholder="499.00" />
-                  {errors.base_price && <p style={S.error}>{errors.base_price}</p>}
-                </div>
-                <div>
-                  <label style={S.label}>Compare-at Price (₹)</label>
-                  <input style={S.input} name="compare_at_price" value={form.compare_at_price} onChange={handleChange} type="number" min="0" step="0.01" placeholder="799.00" />
-                  {errors.compare_at_price && <p style={S.error}>{errors.compare_at_price}</p>}
-                </div>
-              </div>
-              <div style={S.row}>
-                <div>
-                  <label style={S.label}>Tax %</label>
-                  <input style={S.input} name="tax_percentage" value={form.tax_percentage} onChange={handleChange} type="number" min="0" max="100" />
-                </div>
-                <div>
-                  <label style={S.label}>Shipping Charge (₹)</label>
-                  <input style={S.input} name="shipping_charge" value={form.shipping_charge} onChange={handleChange} type="number" min="0" />
-                </div>
-              </div>
-            </div>
-
-            {/* Returns */}
-            <div style={S.card}>
-              <p style={S.sectionTitle}>↩️ Return Policy</p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-                <input type="checkbox" id="returnable" name="returnable" checked={form.returnable} onChange={handleChange} style={{ width: '1.1rem', height: '1.1rem' }} />
-                <label htmlFor="returnable" style={{ fontWeight: '600', color: '#1a1a2e' }}>Product is Returnable</label>
-              </div>
-              {form.returnable && (
-                <div>
-                  <label style={S.label}>Return Window (days)</label>
-                  <input style={{ ...S.input, maxWidth: '150px' }} name="return_window_days" value={form.return_window_days} onChange={handleChange} type="number" min="1" max="30" />
-                </div>
-              )}
-            </div>
-
-            {/* Variants & Attributes Section — only available after product is saved */}
-            {savedProductId ? (
-              <div style={S.card}>
-                <p style={S.sectionTitle}>🎨 Product Attributes & Variants</p>
-                {variantApiError && <div style={S.apiError}>{variantApiError}</div>}
-                {variantSuccess && <div style={{ ...S.apiError, background: '#d1fae5', border: '1px solid #6ee7b7', color: '#065f46' }}>{variantSuccess}</div>}
-
-                {/* Add Attribute */}
-                <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem' }}>
-                  <input
-                    style={{ ...S.input, flex: 1 }}
-                    placeholder="Attribute name (e.g. Color, Size, Material)"
-                    value={newAttrName}
-                    onChange={e => setNewAttrName(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addAttribute())}
-                  />
-                  <button type="button" style={S.secondaryBtn} onClick={addAttribute} disabled={!newAttrName.trim()}>+ Add</button>
-                </div>
-
-                {attrLoading ? <p>Loading attributes...</p> : attributes.map(attr => (
-                  <div key={attr.id} style={{ marginBottom: '1rem', background: '#fafbff', padding: '1rem', borderRadius: '10px', border: '1.5px solid #e0e7ff' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
-                      <strong style={{ color: '#3730a3', fontSize: '0.9rem' }}>🏷 {attr.name}</strong>
-                      <button type="button" style={S.dangerBtn} onClick={() => deleteAttribute(attr.id)}>Remove Attribute</button>
-                    </div>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginBottom: '0.6rem' }}>
-                      {attr.values.map(v => (
-                        <span key={v.id} style={S.chip}>
-                          {v.value}
-                          <button type="button" style={S.chipRemove} onClick={() => removeValue(attr.id, v.id)}>×</button>
-                        </span>
-                      ))}
-                    </div>
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
-                      <input
-                        style={{ ...S.input, flex: 1, padding: '0.4rem 0.6rem', fontSize: '0.85rem' }}
-                        placeholder={`Add ${attr.name} value...`}
-                        value={newValueInputs[attr.id] || ''}
-                        onChange={e => setNewValueInputs(prev => ({ ...prev, [attr.id]: e.target.value }))}
-                        onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addValue(attr.id))}
-                      />
-                      <button type="button" style={{ ...S.secondaryBtn, padding: '0.4rem 0.75rem', fontSize: '0.82rem' }} onClick={() => addValue(attr.id)}>Add Value</button>
-                    </div>
-                  </div>
-                ))}
-
-                {attributes.length > 0 && attributes.every(a => a.values.length > 0) && (
-                  <>
-                    <hr style={S.divider} />
-                    <p style={{ ...S.sectionTitle, fontSize: '0.9rem' }}>⚡ Generate Variants (Cartesian Product)</p>
-                    <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
-                      <div style={{ flex: 1, minWidth: '120px' }}>
-                        <label style={S.label}>Base Price (₹)</label>
-                        <input style={S.input} type="number" min="0" value={generatePrice} onChange={e => setGeneratePrice(e.target.value)} placeholder="499" />
-                      </div>
-                      <div style={{ flex: 1, minWidth: '120px' }}>
-                        <label style={S.label}>SKU Prefix</label>
-                        <input style={S.input} maxLength={10} value={generatePrefix} onChange={e => setGeneratePrefix(e.target.value.toUpperCase())} placeholder="SKU" />
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-                        <button type="button" style={{ ...S.primaryBtn, width: 'auto', padding: '0.6rem 1.25rem' }} onClick={handleGenerate} disabled={variantLoading || !generatePrice}>
-                          {variantLoading ? '⏳ Generating...' : '✨ Generate Variants'}
-                        </button>
-                      </div>
-                    </div>
-                  </>
-                )}
-
-                {/* Variants Table */}
-                {variants.length > 0 && (
-                  <>
-                    <hr style={S.divider} />
-                    <p style={{ ...S.sectionTitle, fontSize: '0.9rem' }}>📋 Variants ({variants.length})</p>
-                    <div style={{ overflowX: 'auto' }}>
-                      <table style={S.variantTable}>
-                        <thead>
-                          <tr>
-                            <th style={S.th}>Combination</th>
-                            <th style={S.th}>SKU</th>
-                            <th style={S.th}>Price (₹)</th>
-                            <th style={S.th}>Compare-at (₹)</th>
-                            <th style={S.th}>Weight (g)</th>
-                            <th style={S.th}>Status</th>
-                            <th style={S.th}>Actions</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {variants.map(v => {
-                            const editing = editingVariant[v.id] || {};
-                            const isChanged = Object.keys(editing).length > 0;
-                            return (
-                              <tr key={v.id}>
-                                <td style={S.td}>
-                                  <span style={{ fontWeight: '600', color: '#3730a3', fontSize: '0.82rem' }}>
-                                    {v.attribute_summary || '—'}
-                                  </span>
-                                </td>
-                                <td style={S.td}>
-                                  <input style={S.smallInput} value={editing.sku ?? v.sku} onChange={e => handleVariantEdit(v.id, 'sku', e.target.value)} />
-                                </td>
-                                <td style={S.td}>
-                                  <input style={{ ...S.smallInput, width: '80px' }} type="number" value={editing.price ?? v.price} onChange={e => handleVariantEdit(v.id, 'price', e.target.value)} />
-                                </td>
-                                <td style={S.td}>
-                                  <input style={{ ...S.smallInput, width: '80px' }} type="number" value={editing.compare_at_price ?? v.compare_at_price ?? ''} onChange={e => handleVariantEdit(v.id, 'compare_at_price', e.target.value || null)} />
-                                </td>
-                                <td style={S.td}>
-                                  <input style={{ ...S.smallInput, width: '70px' }} type="number" value={editing.weight ?? v.weight ?? ''} onChange={e => handleVariantEdit(v.id, 'weight', e.target.value || null)} />
-                                </td>
-                                <td style={S.td}>
-                                  <span style={S.badge(v.is_active)}>{v.is_active ? 'Active' : 'Inactive'}</span>
-                                </td>
-                                <td style={S.td}>
-                                  <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
-                                    {isChanged && <button type="button" style={S.successBtn} onClick={() => saveVariant(v.id)}>Save</button>}
-                                    <button type="button" style={v.is_active ? S.dangerBtn : S.successBtn} onClick={() => toggleVariantActive(v)}>
-                                      {v.is_active ? 'Deactivate' : 'Activate'}
-                                    </button>
-                                    <button type="button" style={S.dangerBtn} onClick={() => deleteVariant(v.id)}>Delete</button>
-                                  </div>
-                                </td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </>
-                )}
-              </div>
-            ) : (
-              <div style={{ ...S.card, textAlign: 'center', color: '#64748b', padding: '2rem' }}>
-                <p style={{ fontSize: '1.5rem', marginBottom: '0.5rem' }}>💡</p>
-                <p style={{ fontWeight: '600' }}>Save the product first to manage variants & attributes.</p>
-              </div>
-            )}
-          </div>
-
-          {/* RIGHT COLUMN — Sidebar */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            {/* Status & Submit */}
-            <div style={S.card}>
-              <p style={S.sectionTitle}>🚀 Product Status</p>
-              <div style={S.field}>
-                <label style={S.label}>Status</label>
-                <select style={S.select} name="status" value={form.status} onChange={handleChange}>
-                  <option value="DRAFT">Draft</option>
-                  <option value="ACTIVE">Active</option>
-                  <option value="INACTIVE">Inactive</option>
-                  <option value="ARCHIVED">Archived</option>
-                </select>
-              </div>
-              <button type="submit" style={S.primaryBtn} disabled={isSaving}>
-                {isSaving ? '⏳ Saving...' : isEdit ? '💾 Save Changes' : '✅ Create Product'}
-              </button>
-              {isEdit && (
-                <button
-                  type="button"
-                  style={{ ...S.secondaryBtn, width: '100%', marginTop: '0.75rem' }}
-                  onClick={() => navigate('/seller/products')}
-                >
-                  ← Back to Products
-                </button>
-              )}
-            </div>
-
-            {/* Product Images Card */}
-            {savedProductId ? (
-              <div style={S.card}>
-                <p style={S.sectionTitle}>🖼️ Product Images</p>
-                {imageError && <div style={S.error}>{imageError}</div>}
+              <div className="sp-card__body">
+                {apiError && <div className="sp-alert sp-alert--error">{apiError}</div>}
                 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem', marginBottom: '1rem' }}>
-                  {images.map(img => (
-                    <div key={img.id} style={{ border: img.is_primary ? '2px solid #7c3aed' : '1px solid #cbd5e1', borderRadius: '8px', overflow: 'hidden', background: '#fafafa', position: 'relative' }}>
-                      <img src={img.image} alt={img.alt_text} style={{ width: '100%', height: '80px', objectFit: 'cover' }} />
-                      
-                      {img.is_primary && (
-                        <span style={{ position: 'absolute', top: '4px', left: '4px', background: '#7c3aed', color: '#fff', fontSize: '0.65rem', fontWeight: '700', padding: '2px 6px', borderRadius: '4px' }}>
-                          Primary
-                        </span>
-                      )}
+                <div className="sp-field">
+                  <label className="sp-label">Product Name *</label>
+                  <input className="sp-input" name="name" value={form.name} onChange={handleChange} placeholder="e.g. Men's Cotton T-Shirt" />
+                  {errors.name && <p style={{ color: 'var(--badge-red-txt)', fontSize: '0.75rem', marginTop: 4 }}>{errors.name}</p>}
+                </div>
+                
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  <div className="sp-field">
+                    <label className="sp-label">Brand *</label>
+                    <input className="sp-input" name="brand" value={form.brand} onChange={handleChange} placeholder="e.g. Nike" />
+                    {errors.brand && <p style={{ color: 'var(--badge-red-txt)', fontSize: '0.75rem', marginTop: 4 }}>{errors.brand}</p>}
+                  </div>
+                  <div className="sp-field">
+                    <label className="sp-label">Category *</label>
+                    <select className="sp-input" name="category" value={form.category} onChange={handleChange}>
+                      <option value="">Select category</option>
+                      {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                    {errors.category && <p style={{ color: 'var(--badge-red-txt)', fontSize: '0.75rem', marginTop: 4 }}>{errors.category}</p>}
+                  </div>
+                </div>
 
-                      <div style={{ padding: '0.3rem', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.2rem' }}>
-                          <button type="button" style={{ ...S.secondaryBtn, padding: '2px 4px', fontSize: '0.68rem', flex: 1 }} onClick={() => handleMakePrimary(img.id)} disabled={img.is_primary}>
-                            Primary
-                          </button>
-                          <button type="button" style={{ ...S.dangerBtn, padding: '2px 4px', fontSize: '0.68rem' }} onClick={() => handleDeleteImage(img.id)}>
-                            Delete
-                          </button>
-                        </div>
-                        
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.2rem' }}>
-                          <span style={{ fontSize: '0.68rem', color: '#64748b' }}>Order:</span>
-                          <input
-                            type="number"
-                            style={{ ...S.smallInput, width: '40px', padding: '1px 3px', fontSize: '0.7rem' }}
-                            value={img.sort_order}
-                            onChange={e => handleUpdateSortOrder(img.id, Number(e.target.value))}
-                          />
-                        </div>
+                <div className="sp-field">
+                  <label className="sp-label">Description *</label>
+                  <textarea className="sp-input" style={{ minHeight: 100, resize: 'vertical' }} name="description" value={form.description} onChange={handleChange} placeholder="Describe the product..." />
+                  {errors.description && <p style={{ color: 'var(--badge-red-txt)', fontSize: '0.75rem', marginTop: 4 }}>{errors.description}</p>}
+                </div>
+
+                <div className="sp-field">
+                  <label className="sp-label">URL Slug</label>
+                  <input className="sp-input" name="slug" value={form.slug} onChange={e => { setSlugManual(true); setForm(p => ({ ...p, slug: e.target.value })); }} placeholder="auto-generated-from-name" />
+                </div>
+              </div>
+            </div>
+
+            <div className="sp-card">
+              <div className="sp-card__head">
+                <h2 className="sp-card__title">💰 Pricing & Tax</h2>
+              </div>
+              <div className="sp-card__body">
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  <div className="sp-field">
+                    <label className="sp-label">Base Price (₹) *</label>
+                    <input className="sp-input" type="number" min="0" step="0.01" name="base_price" value={form.base_price} onChange={handleChange} placeholder="499.00" />
+                    {errors.base_price && <p style={{ color: 'var(--badge-red-txt)', fontSize: '0.75rem', marginTop: 4 }}>{errors.base_price}</p>}
+                  </div>
+                  <div className="sp-field">
+                    <label className="sp-label">Compare-at Price (₹)</label>
+                    <input className="sp-input" type="number" min="0" step="0.01" name="compare_at_price" value={form.compare_at_price} onChange={handleChange} placeholder="799.00" />
+                    {errors.compare_at_price && <p style={{ color: 'var(--badge-red-txt)', fontSize: '0.75rem', marginTop: 4 }}>{errors.compare_at_price}</p>}
+                  </div>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                  <div className="sp-field">
+                    <label className="sp-label">Tax %</label>
+                    <input className="sp-input" type="number" min="0" max="100" name="tax_percentage" value={form.tax_percentage} onChange={handleChange} />
+                  </div>
+                  <div className="sp-field">
+                    <label className="sp-label">Shipping Charge (₹)</label>
+                    <input className="sp-input" type="number" min="0" name="shipping_charge" value={form.shipping_charge} onChange={handleChange} />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="sp-card">
+              <div className="sp-card__head">
+                <h2 className="sp-card__title">↩️ Return Policy</h2>
+              </div>
+              <div className="sp-card__body">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
+                  <input type="checkbox" id="returnable" name="returnable" checked={form.returnable} onChange={handleChange} style={{ width: 18, height: 18, cursor: 'pointer' }} />
+                  <label htmlFor="returnable" style={{ fontWeight: 600, color: 'var(--sel-text-1)', cursor: 'pointer' }}>Product is Returnable</label>
+                </div>
+                {form.returnable && (
+                  <div className="sp-field" style={{ maxWidth: 200 }}>
+                    <label className="sp-label">Return Window (days)</label>
+                    <input className="sp-input" type="number" min="1" max="30" name="return_window_days" value={form.return_window_days} onChange={handleChange} />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {savedProductId ? (
+              <div className="sp-card">
+                <div className="sp-card__head">
+                  <h2 className="sp-card__title">🎨 Attributes & Variants</h2>
+                </div>
+                <div className="sp-card__body">
+                  {variantApiError && <div className="sp-alert sp-alert--error">{variantApiError}</div>}
+                  {variantSuccess && <div className="sp-alert" style={{ background: 'var(--badge-green-bg)', color: 'var(--badge-green-txt)', borderLeft: '3px solid var(--badge-green-txt)' }}>{variantSuccess}</div>}
+
+                  <div style={{ display: 'flex', gap: 12, marginBottom: 20 }}>
+                    <input
+                      className="sp-input"
+                      placeholder="Attribute name (e.g. Size, Color)"
+                      value={newAttrName}
+                      onChange={e => setNewAttrName(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addAttribute())}
+                    />
+                    <button type="button" className="sp-btn sp-btn--ghost" onClick={addAttribute} disabled={!newAttrName.trim()}>Add</button>
+                  </div>
+
+                  {attrLoading ? <div className="sp-loading">Loading attributes...</div> : attributes.map(attr => (
+                    <div key={attr.id} style={{ padding: 16, background: 'var(--sel-bg)', border: '1px solid var(--sel-card-border)', borderRadius: 'var(--sel-radius-sm)', marginBottom: 16 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                        <strong style={{ color: 'var(--sel-text-1)', fontSize: '0.95rem' }}>🏷 {attr.name}</strong>
+                        <button type="button" className="sp-btn sp-btn--ghost sp-btn--sm" style={{ color: 'var(--badge-red-txt)' }} onClick={() => deleteAttribute(attr.id)}>Remove</button>
+                      </div>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+                        {attr.values.map(v => (
+                          <span key={v.id} style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'var(--sel-accent-light)', color: 'var(--sel-accent-text)', padding: '4px 10px', borderRadius: 99, fontSize: '0.8rem', fontWeight: 500 }}>
+                            {v.value}
+                            <button type="button" style={{ background: 'none', border: 'none', color: 'inherit', cursor: 'pointer', padding: 0, fontWeight: 700 }} onClick={() => removeValue(attr.id, v.id)}>×</button>
+                          </span>
+                        ))}
+                      </div>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <input
+                          className="sp-input"
+                          style={{ padding: '6px 10px' }}
+                          placeholder={`Add ${attr.name} value...`}
+                          value={newValueInputs[attr.id] || ''}
+                          onChange={e => setNewValueInputs(prev => ({ ...prev, [attr.id]: e.target.value }))}
+                          onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addValue(attr.id))}
+                        />
+                        <button type="button" className="sp-btn sp-btn--ghost sp-btn--sm" onClick={() => addValue(attr.id)}>Add Value</button>
                       </div>
                     </div>
                   ))}
-                </div>
 
-                <div style={{ border: '2px dashed #cbd5e1', borderRadius: '8px', padding: '1rem', textAlign: 'center', cursor: 'pointer', background: '#f8fafc' }}>
-                  <label style={{ cursor: 'pointer', display: 'block' }}>
-                    <span style={{ fontSize: '1.25rem', display: 'block', marginBottom: '0.25rem' }}>📤</span>
-                    <span style={{ fontSize: '0.78rem', fontWeight: '600', color: '#475569' }}>Upload Image</span>
-                    <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageUpload} disabled={imageLoading} />
-                  </label>
-                  {imageLoading && <p style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.25rem' }}>Uploading...</p>}
+                  {attributes.length > 0 && attributes.every(a => a.values.length > 0) && (
+                    <>
+                      <hr style={{ border: 'none', borderTop: '1px solid var(--sel-card-border)', margin: '24px 0' }} />
+                      <h3 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--sel-text-1)', marginBottom: 16 }}>⚡ Generate Variants</h3>
+                      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', alignItems: 'flex-end', marginBottom: 24 }}>
+                        <div className="sp-field" style={{ margin: 0, flex: 1, minWidth: 120 }}>
+                          <label className="sp-label">Base Price (₹)</label>
+                          <input className="sp-input" type="number" min="0" value={generatePrice} onChange={e => setGeneratePrice(e.target.value)} placeholder="499" />
+                        </div>
+                        <div className="sp-field" style={{ margin: 0, flex: 1, minWidth: 120 }}>
+                          <label className="sp-label">SKU Prefix</label>
+                          <input className="sp-input" maxLength={10} value={generatePrefix} onChange={e => setGeneratePrefix(e.target.value.toUpperCase())} placeholder="SKU" />
+                        </div>
+                        <button type="button" className="sp-btn sp-btn--primary" onClick={handleGenerate} disabled={variantLoading || !generatePrice}>
+                          {variantLoading ? '⏳ Generating...' : '✨ Generate Variants'}
+                        </button>
+                      </div>
+                    </>
+                  )}
+
+                  {variants.length > 0 && (
+                    <>
+                      <h3 style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--sel-text-1)', marginBottom: 12 }}>📋 Variant List ({variants.length})</h3>
+                      <div className="sp-table-wrap">
+                        <table className="sp-table">
+                          <thead>
+                            <tr>
+                              <th>Variant</th>
+                              <th>SKU</th>
+                              <th>Price (₹)</th>
+                              <th>Compare (₹)</th>
+                              <th>Weight (g)</th>
+                              <th>Status</th>
+                              <th>Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {variants.map(v => {
+                              const editing = editingVariant[v.id] || {};
+                              const isChanged = Object.keys(editing).length > 0;
+                              return (
+                                <tr key={v.id}>
+                                  <td className="td-bold">{v.attribute_summary || '—'}</td>
+                                  <td><input className="sp-input" style={{ padding: '4px 8px', fontSize: '0.8rem' }} value={editing.sku ?? v.sku} onChange={e => handleVariantEdit(v.id, 'sku', e.target.value)} /></td>
+                                  <td><input className="sp-input" style={{ width: 80, padding: '4px 8px', fontSize: '0.8rem' }} type="number" value={editing.price ?? v.price} onChange={e => handleVariantEdit(v.id, 'price', e.target.value)} /></td>
+                                  <td><input className="sp-input" style={{ width: 80, padding: '4px 8px', fontSize: '0.8rem' }} type="number" value={editing.compare_at_price ?? v.compare_at_price ?? ''} onChange={e => handleVariantEdit(v.id, 'compare_at_price', e.target.value || null)} /></td>
+                                  <td><input className="sp-input" style={{ width: 80, padding: '4px 8px', fontSize: '0.8rem' }} type="number" value={editing.weight ?? v.weight ?? ''} onChange={e => handleVariantEdit(v.id, 'weight', e.target.value || null)} /></td>
+                                  <td><span className={badgeClass(v.is_active ? 'ACTIVE' : 'INACTIVE')}>{v.is_active ? 'Active' : 'Inactive'}</span></td>
+                                  <td>
+                                    <div style={{ display: 'flex', gap: 6 }}>
+                                      {isChanged && <button type="button" className="sp-btn sp-btn--primary sp-btn--sm" onClick={() => saveVariant(v.id)}>Save</button>}
+                                      <button type="button" className="sp-btn sp-btn--ghost sp-btn--sm" onClick={() => toggleVariantActive(v)}>
+                                        {v.is_active ? 'Disable' : 'Enable'}
+                                      </button>
+                                      <button type="button" className="sp-btn sp-btn--ghost sp-btn--sm" style={{ color: 'var(--badge-red-txt)' }} onClick={() => deleteVariant(v.id)}>Del</button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             ) : (
-              <div style={S.card}>
-                <p style={S.sectionTitle}>🖼️ Product Images</p>
-                <p style={{ fontSize: '0.82rem', color: '#64748b' }}>Save the product first to enable image uploads.</p>
-              </div>
-            )}
-
-
-            {/* Tips */}
-            <div style={{ ...S.card, background: 'linear-gradient(135deg, #ede9fe, #e0e7ff)' }}>
-              <p style={{ ...S.sectionTitle, color: '#3730a3' }}>💡 Tips</p>
-              <ul style={{ margin: 0, paddingLeft: '1.25rem', color: '#4c1d95', fontSize: '0.85rem', lineHeight: '1.8' }}>
-                <li>Save the product first, then add attributes like <strong>Color</strong>, <strong>Size</strong>, or <strong>Material</strong>.</li>
-                <li>Add values for each attribute (e.g. Red, Blue, S, M, L).</li>
-                <li>Use <strong>Generate Variants</strong> to auto-create all combinations.</li>
-                <li>Edit SKU, price, and weight directly in the variants table.</li>
-                <li>Submit for admin review when ready.</li>
-              </ul>
-            </div>
-
-            {/* Product Summary (edit mode) */}
-            {isEdit && variants.length > 0 && (
-              <div style={S.card}>
-                <p style={S.sectionTitle}>📊 Variant Summary</p>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.9rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#64748b' }}>Total Variants</span>
-                    <strong>{variants.length}</strong>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#64748b' }}>Active</span>
-                    <strong style={{ color: '#065f46' }}>{variants.filter(v => v.is_active).length}</strong>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#64748b' }}>Inactive</span>
-                    <strong style={{ color: '#dc2626' }}>{variants.filter(v => !v.is_active).length}</strong>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#64748b' }}>Attributes</span>
-                    <strong>{attributes.length}</strong>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: '#64748b' }}>Price Range</span>
-                    <strong>₹{Math.min(...variants.map(v => Number(v.price)))} – ₹{Math.max(...variants.map(v => Number(v.price)))}</strong>
-                  </div>
-                </div>
+              <div className="sp-card" style={{ padding: 32, textAlign: 'center', color: 'var(--sel-text-muted)' }}>
+                <p style={{ fontSize: '2rem', margin: '0 0 12px' }}>💡</p>
+                <p>Save the product basic details first to manage variants & attributes.</p>
               </div>
             )}
           </div>
+
+          {/* Right Sidebar */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            <div className="sp-card">
+              <div className="sp-card__head">
+                <h2 className="sp-card__title">🚀 Publish</h2>
+              </div>
+              <div className="sp-card__body">
+                <div className="sp-field">
+                  <label className="sp-label">Status</label>
+                  <select className="sp-input" name="status" value={form.status} onChange={handleChange}>
+                    <option value="DRAFT">Draft</option>
+                    <option value="ACTIVE">Active</option>
+                    <option value="INACTIVE">Inactive</option>
+                    <option value="ARCHIVED">Archived</option>
+                  </select>
+                </div>
+                <button type="submit" className="sp-btn sp-btn--primary" style={{ width: '100%', justifyContent: 'center' }} disabled={isSaving}>
+                  {isSaving ? '⏳ Saving...' : isEdit ? '💾 Save Changes' : '✅ Create Product'}
+                </button>
+              </div>
+            </div>
+
+            {savedProductId ? (
+              <div className="sp-card">
+                <div className="sp-card__head">
+                  <h2 className="sp-card__title">🖼️ Images</h2>
+                </div>
+                <div className="sp-card__body">
+                  {imageError && <div className="sp-alert sp-alert--error" style={{ fontSize: '0.8rem' }}>{imageError}</div>}
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+                    {images.map(img => (
+                      <div key={img.id} style={{ border: img.is_primary ? '2px solid var(--sel-accent)' : '1px solid var(--sel-card-border)', borderRadius: 'var(--sel-radius-sm)', overflow: 'hidden', background: 'var(--sel-bg)', position: 'relative' }}>
+                        <img src={img.image} alt={img.alt_text} style={{ width: '100%', height: 80, objectFit: 'cover' }} />
+                        {img.is_primary && (
+                          <span style={{ position: 'absolute', top: 4, left: 4, background: 'var(--sel-accent)', color: '#fff', fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: 4 }}>
+                            Primary
+                          </span>
+                        )}
+                        <div style={{ padding: 8, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          <div style={{ display: 'flex', gap: 6 }}>
+                            <button type="button" className="sp-btn sp-btn--ghost sp-btn--sm" style={{ flex: 1, padding: '4px' }} onClick={() => handleMakePrimary(img.id)} disabled={img.is_primary}>Primary</button>
+                            <button type="button" className="sp-btn sp-btn--ghost sp-btn--sm" style={{ padding: '4px', color: 'var(--badge-red-txt)' }} onClick={() => handleDeleteImage(img.id)}>Del</button>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--sel-text-muted)' }}>Order:</span>
+                            <input className="sp-input" type="number" style={{ padding: '2px 6px', height: 24 }} value={img.sort_order} onChange={e => handleUpdateSortOrder(img.id, Number(e.target.value))} />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div style={{ border: '2px dashed var(--sel-card-border)', borderRadius: 'var(--sel-radius-sm)', padding: 20, textAlign: 'center', background: 'var(--sel-bg)' }}>
+                    <label style={{ cursor: 'pointer', display: 'block' }}>
+                      <span style={{ fontSize: '1.5rem', display: 'block', marginBottom: 8 }}>📤</span>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--sel-text-2)' }}>Upload Image</span>
+                      <input type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageUpload} disabled={imageLoading} />
+                    </label>
+                    {imageLoading && <p style={{ fontSize: '0.75rem', color: 'var(--sel-text-muted)', marginTop: 4 }}>Uploading...</p>}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="sp-card" style={{ padding: 24, textAlign: 'center', color: 'var(--sel-text-muted)' }}>
+                <p>Save product first to upload images.</p>
+              </div>
+            )}
+            
+            {/* Fix for right column side-by-side grid responsiveness */}
+            <style>
+              {`
+                @media(min-width: 1024px) {
+                  .responsive-grid { grid-template-columns: 1fr 340px !important; }
+                }
+              `}
+            </style>
+          </div>
         </div>
       </form>
-    </div>
+    </>
   );
 };
 export const SellerProductCreatePage: React.FC = () => <SellerProductFormPage mode="create" />;

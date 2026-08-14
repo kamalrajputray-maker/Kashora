@@ -54,6 +54,7 @@
 
 /* ── Dark theme tokens ──────────────────────────────────── */
 .sel-layout[data-theme="dark"] {
+  color-scheme: dark;
   --sel-accent:          #818cf8;
   --sel-accent-light:    rgba(129,140,248,0.14);
   --sel-accent-text:     #a5b4fc;
