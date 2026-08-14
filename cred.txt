@@ -1,0 +1,20 @@
+SuperAdmin:
+ID (phone): 9000000001
+Password: Admin@12345
+
+Admin:
+ID (phone): 9000000002
+Password: Admin@12345
+
+Seller: http://localhost:3000/seller/login
+ID (phone): 9000000003
+Password: Seller@12345
+
+Buyer:
+ID (phone): 9000000004
+Password: Buyer@12345
+
+SuperAdmin: http://localhost:5173/superadmin-login
+Admin:      http://localhost:5173/admin-login
+Seller: http://localhost:5173/seller-login
+Buyer:      http://localhost:5173/buyer-login
