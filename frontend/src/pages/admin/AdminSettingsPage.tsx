@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { settingsAPI, SiteSettings } from '../../services/api';
+import { settingsAPI, adminCategoryAPI, SiteSettings, Category } from '../../services/api';
 
 const AdminSettingsPage: React.FC = () => {
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [faviconFile, setFaviconFile] = useState<File | null>(null);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [savingBanner, setSavingBanner] = useState(false);
   const [savingIdentity, setSavingIdentity] = useState(false);
@@ -13,7 +14,17 @@ const AdminSettingsPage: React.FC = () => {
 
   useEffect(() => {
     fetchSettings();
+    fetchCategories();
   }, []);
+
+  const fetchCategories = async () => {
+    try {
+      const res = await adminCategoryAPI.getCategories({ page: 1, limit: 1000 });
+      setCategories(res.data.results);
+    } catch (err) {
+      console.error("Failed to load categories", err);
+    }
+  };
 
   const fetchSettings = async () => {
     try {
@@ -58,6 +69,7 @@ const AdminSettingsPage: React.FC = () => {
       formData.append('promo_banner_title', settings.promo_banner_title);
       formData.append('promo_banner_subtitle', settings.promo_banner_subtitle);
       formData.append('promo_banner_button_text', settings.promo_banner_button_text);
+      formData.append('promo_banner_link', settings.promo_banner_link);
       if (imageFile) {
         formData.append('promo_banner_image', imageFile);
       }
@@ -213,7 +225,25 @@ const AdminSettingsPage: React.FC = () => {
 
           <div>
             <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 500, color: 'var(--adm-text-2)', marginBottom: '6px' }}>
-              Banner Image (Optional)
+              Banner Target Link (Destination)
+            </label>
+            <select
+              value={settings?.promo_banner_link || '/products'}
+              onChange={(e) => setSettings(s => s ? { ...s, promo_banner_link: e.target.value } : null)}
+              style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--adm-card-border)', borderRadius: '6px', fontSize: '0.95rem', boxSizing: 'border-box', background: 'var(--adm-bg)', color: 'var(--adm-text-1)', outline: 'none' }}
+            >
+              <option value="/products">All Products</option>
+              {categories.map(cat => (
+                <option key={cat.id} value={`/products?category=${cat.slug}`}>
+                  Category: {cat.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 500, color: 'var(--adm-text-2)', marginBottom: '6px' }}>
+              Banner Background Image (Optional)
             </label>
             <input
               type="file"

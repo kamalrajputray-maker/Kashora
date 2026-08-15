@@ -774,6 +774,7 @@ export interface SiteSettings {
   promo_banner_title: string;
   promo_banner_subtitle: string;
   promo_banner_button_text: string;
+  promo_banner_link: string;
   promo_banner_image: string | null;
   site_logo: string | null;
   site_favicon: string | null;

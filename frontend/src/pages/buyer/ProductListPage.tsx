@@ -102,7 +102,17 @@ export const ProductListPage: React.FC = () => {
             <div className="byr-hero__content">
               <h1 className="byr-hero__title">{siteSettings?.promo_banner_title || 'UP TO 35% OFF'}</h1>
               <p className="byr-hero__subtitle">{siteSettings?.promo_banner_subtitle || 'On your first order. Shop exclusive offers and trends.'}</p>
-              <button className="byr-btn byr-btn--primary" onClick={() => navigate('/products')}>{siteSettings?.promo_banner_button_text || 'Shop Now'}</button>
+              <button 
+                className="byr-btn byr-btn--primary" 
+                onClick={() => {
+                  navigate(siteSettings?.promo_banner_link || '/products');
+                  setTimeout(() => {
+                    document.getElementById('products-grid')?.scrollIntoView({ behavior: 'smooth' });
+                  }, 100);
+                }}
+              >
+                {siteSettings?.promo_banner_button_text || 'Shop Now'}
+              </button>
             </div>
             <img 
               src={siteSettings?.promo_banner_image || "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=800&auto=format&fit=crop"} 
@@ -239,7 +249,9 @@ export const ProductListPage: React.FC = () => {
 
         {/* 8. Products For You */}
         <div className="byr-section" id="products-grid">
-          <h2 className="byr-section-header__title" style={{ marginBottom: 32 }}>Products For You</h2>
+          <h2 className="byr-section-header__title" style={{ marginBottom: 32 }}>
+            {getSelectedCategoryName() ? `Products in ${getSelectedCategoryName()}` : 'Products For You'}
+          </h2>
           <div className="byr-products-section">
             
             {/* LEFT SIDEBAR */}
