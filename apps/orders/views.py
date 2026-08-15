@@ -161,6 +161,25 @@ class OrderViewSet(viewsets.ViewSet):
 
             # Clear cart
             cart.items.all().delete()
+            
+            # Send Email Confirmation
+            if request.user.email:
+                try:
+                    from django.core.mail import send_mail
+                    from django.conf import settings
+                    
+                    item_names = ", ".join([item["product_name"] for item in order_items_to_create])
+                    message = f"Hello {request.user.first_name or 'Customer'},\n\nYour order #{order.id} has been placed successfully!\n\nOrder Total: ₹{final_amount}\nItems: {item_names}\n\nThank you for shopping with us!"
+                    
+                    send_mail(
+                        subject="Kashora Order Confirmation",
+                        message=message,
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=[request.user.email],
+                        fail_silently=True,
+                    )
+                except Exception:
+                    pass
 
         return Response(OrderSerializer(order).data, status=status.HTTP_201_CREATED)
 

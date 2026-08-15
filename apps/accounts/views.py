@@ -1,6 +1,12 @@
+import random
+import uuid
+from django.core.cache import cache
+from django.core.mail import send_mail
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from rest_framework import generics, status
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -10,6 +16,88 @@ from apps.accounts.permissions import IsAdminOrSuperAdmin, IsSuperAdmin
 from apps.accounts.serializers import AdminCreateSerializer, BuyerRegistrationSerializer, LoginSerializer, SellerRegistrationSerializer, UserSerializer, VerificationDocumentSerializer
 
 User = get_user_model()
+
+
+class SendOTPAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        email = request.data.get("email")
+        if not email:
+            return Response({"detail": "Email is required."}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Generate 6-digit OTP
+        otp = str(random.randint(100000, 999999))
+        
+        # Store OTP in cache for 5 minutes (300 seconds)
+        cache.set(f"otp_{email}", otp, timeout=300)
+        
+        # Send Email
+        try:
+            send_mail(
+                subject="Your Kashora Verification Code",
+                message=f"Your verification code is: {otp}\nThis code will expire in 5 minutes.",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[email],
+                fail_silently=False,
+            )
+        except Exception as e:
+            return Response({"detail": "Failed to send email."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+        return Response({"message": "OTP sent successfully."}, status=status.HTTP_200_OK)
+
+
+class VerifyOTPAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        email = request.data.get("email")
+        otp = request.data.get("otp")
+        
+        if not email or not otp:
+            return Response({"detail": "Email and OTP are required."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        cached_otp = cache.get(f"otp_{email}")
+        
+        if not cached_otp or cached_otp != str(otp):
+            return Response({"detail": "Invalid or expired OTP."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        # Clear the OTP from cache
+        cache.delete(f"otp_{email}")
+        
+        # Generate a temporary validation token (valid for registration/reset)
+        token = str(uuid.uuid4())
+        cache.set(f"valid_token_{email}", token, timeout=600) # 10 mins
+        
+        return Response({"message": "OTP verified successfully.", "token": token}, status=status.HTTP_200_OK)
+
+
+class ResetPasswordAPIView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        email = request.data.get("email")
+        otp_token = request.data.get("otp_token")
+        new_password = request.data.get("new_password")
+        
+        if not email or not otp_token or not new_password:
+            return Response({"detail": "email, otp_token, and new_password are required."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        cached_token = cache.get(f"valid_token_{email}")
+        if not cached_token or cached_token != otp_token:
+            return Response({"detail": "Invalid or expired OTP token."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        user = User.objects.filter(email=email).first()
+        if not user:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+            
+        user.set_password(new_password)
+        user.save()
+        
+        # Clear token
+        cache.delete(f"valid_token_{email}")
+        
+        return Response({"message": "Password reset successfully."}, status=status.HTTP_200_OK)
 
 
 class BuyerRegistrationAPIView(generics.CreateAPIView):
@@ -46,7 +134,79 @@ class LoginAPIView(generics.GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.validated_data["user"]
+        
+        from apps.dashboard.models import SiteSettings
+        from django.core.cache import cache
+        import uuid
+        
+        settings = SiteSettings.get_settings()
+        if settings.enable_2fa and user.email:
+            # Generate OTP
+            token = str(uuid.uuid4())
+            cache.set(f"valid_token_{user.email}", token, timeout=600)
+            
+            try:
+                from django.core.mail import send_mail
+                from django.conf import settings as django_settings
+                send_mail(
+                    subject="Kashora Login Verification",
+                    message=f"Your login verification OTP is: {token}",
+                    from_email=django_settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[user.email],
+                    fail_silently=False,
+                )
+            except Exception as e:
+                pass
+                
+            return Response(
+                {"requires_otp": True, "message": "OTP sent to your email", "email": user.email},
+                status=status.HTTP_200_OK
+            )
+        
         refresh = serializer.validated_data["refresh"]
+        return Response(
+            {
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+                "user": {
+                    "id": str(user.id),
+                    "phone": user.phone,
+                    "email": user.email,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                    "role": user.role,
+                },
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class LoginVerifyOTPAPIView(generics.GenericAPIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        email = request.data.get("email")
+        otp_token = request.data.get("otp_token")
+        
+        if not email or not otp_token:
+            return Response({"detail": "Email and OTP token are required."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        from django.core.cache import cache
+        cached_token = cache.get(f"valid_token_{email}")
+        
+        if not cached_token or cached_token != otp_token:
+            return Response({"detail": "Invalid or expired OTP token."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        user = User.objects.filter(email=email).first()
+        if not user:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+            
+        if not user.is_active:
+            return Response({"detail": "This account is inactive."}, status=status.HTTP_400_BAD_REQUEST)
+            
+        cache.delete(f"valid_token_{email}")
+        
+        refresh = RefreshToken.for_user(user)
         return Response(
             {
                 "access": str(refresh.access_token),

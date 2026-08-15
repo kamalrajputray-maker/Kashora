@@ -13,9 +13,17 @@ from apps.accounts.views import (
     LogoutAPIView,
     SellerRegistrationAPIView,
     VerificationDocumentViewSet,
+    SendOTPAPIView,
+    VerifyOTPAPIView,
+    ResetPasswordAPIView,
+    LoginVerifyOTPAPIView,
 )
 
 urlpatterns = [
+    path("auth/send-otp/", SendOTPAPIView.as_view(), name="send_otp"),
+    path("auth/verify-otp/", VerifyOTPAPIView.as_view(), name="verify_otp"),
+    path("auth/login/verify-otp/", LoginVerifyOTPAPIView.as_view(), name="login_verify_otp"),
+    path("auth/reset-password/", ResetPasswordAPIView.as_view(), name="reset_password"),
     path("auth/register/buyer/", BuyerRegistrationAPIView.as_view(), name="buyer_register"),
     path("auth/register/seller/", SellerRegistrationAPIView.as_view(), name="seller_register"),
     path("auth/login/", LoginAPIView.as_view(), name="auth_login"),

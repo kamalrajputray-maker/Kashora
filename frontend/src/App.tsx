@@ -12,6 +12,8 @@ import SellerLoginPage from './pages/seller/SellerLoginPage';
 import SellerRegisterPage from './pages/seller/SellerRegisterPage';
 import AdminLoginPage from './pages/admin/AdminLoginPage';
 import BuyerLoginPage from './pages/buyer/BuyerLoginPage';
+import BuyerRegisterPage from './pages/buyer/BuyerRegisterPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
 
 // Buyer Pages
 import BuyerDashboardPage from './pages/buyer/BuyerDashboardPage';
@@ -101,9 +103,11 @@ const App: React.FC = () => {
             <Route path="/e2e-runner" element={<E2ERunnerPage />} />
 
             <Route path="/login" element={<BuyerLoginPage />} />
+            <Route path="/register" element={<BuyerRegisterPage />} />
             <Route path="/seller/login" element={<SellerLoginPage />} />
             <Route path="/seller/register" element={<SellerRegisterPage />} />
             <Route path="/admin/login" element={<AdminLoginPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
             {/* ── Public Catalog Routes ── */}
             <Route path="/products" element={<ProductListPage />} />

@@ -67,8 +67,10 @@ apiClient.interceptors.response.use(
 // ========== AUTHENTICATION APIS ==========
 
 export interface LoginRequest {
-  phone: string;
-  password: string;
+  phone?: string;
+  email?: string;
+  password?: string;
+  otp_token?: string;
 }
 
 export interface LoginResponse {
@@ -88,7 +90,8 @@ export interface LoginResponse {
 export interface RegisterRequest {
   phone: string;
   email: string;
-  password: string;
+  password?: string;
+  otp_token: string;
   first_name: string;
   last_name: string;
   business_name?: string;
@@ -102,23 +105,14 @@ export interface RegisterResponse {
 }
 
 export const authAPI = {
-  login: (data: LoginRequest) =>
-    apiClient.post<LoginResponse>('auth/login/', data),
-
-  logout: (data: { refresh: string }) =>
-    apiClient.post('auth/logout/', data),
-
-  refreshToken: (refresh: string) =>
-    apiClient.post('auth/token/refresh/', { refresh }),
-
-  getCurrentUser: () =>
-    apiClient.get('auth/me/'),
-
-  registerSeller: (data: RegisterRequest) =>
-    apiClient.post<RegisterResponse>('auth/register/seller/', data),
-
-  registerBuyer: (data: Omit<RegisterRequest, 'business_name' | 'gst_number' | 'pan_number'>) =>
-    apiClient.post<RegisterResponse>('auth/register/buyer/', data),
+  login: (data: LoginRequest) => apiClient.post<LoginResponse>('auth/login/', data),
+  logout: () => apiClient.post('auth/logout/', { refresh: localStorage.getItem('refreshToken') }),
+  registerBuyer: (data: RegisterRequest) => apiClient.post<RegisterResponse>('auth/register/buyer/', data),
+  registerSeller: (data: RegisterRequest) => apiClient.post<RegisterResponse>('auth/register/seller/', data),
+  getCurrentUser: () => apiClient.get<LoginResponse['user']>('auth/me/'),
+  sendOtp: (data: { email: string }) => apiClient.post('auth/send-otp/', data),
+  verifyOtp: (data: { email: string, otp: string }) => apiClient.post<{message: string, token: string}>('auth/verify-otp/', data),
+  resetPassword: (data: { email: string, otp_token: string, new_password: string }) => apiClient.post('auth/reset-password/', data),
 };
 
 // ========== SELLER PROFILE APIS ==========

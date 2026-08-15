@@ -1,72 +1,82 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { authAPI } from '../../services/api';
 import '../../styles/auth.css';
 
-interface LoginFormData {
-  phone: string;
-  password: string;
-}
-
 const SellerLoginPage: React.FC = () => {
-  const [formData, setFormData] = useState<LoginFormData>({ phone: '', password: '' });
-  const [errors, setErrors] = useState<Partial<LoginFormData>>({});
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [otp, setOtp] = useState('');
+  const [step, setStep] = useState<'LOGIN' | 'OTP'>('LOGIN');
   const [isLoading, setIsLoading] = useState(false);
-  const [apiError, setApiError] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
-  const { login } = useAuth();
+  const { login, setUser } = useAuth();
   const navigate = useNavigate();
 
-  const validateForm = (): boolean => {
-    const newErrors: Partial<LoginFormData> = {};
-    if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone number is required';
-    } else if (!/^\d{10,}$/.test(formData.phone.replace(/\D/g, ''))) {
-      newErrors.phone = 'Phone number must be at least 10 digits';
-    }
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
-    }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    if (errors[name as keyof LoginFormData]) {
-      setErrors(prev => ({ ...prev, [name]: undefined }));
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setApiError(null);
-    if (!validateForm()) return;
+    setError(null);
+    setSuccessMsg(null);
+    if (!email.trim() || !password) { setError('Email and Password are required.'); return; }
+    
+    try {
+      setIsLoading(true);
+      const data: any = await login({ email, password });
+      
+      if (data.requires_otp) {
+        setSuccessMsg(data.message || 'OTP sent to your email.');
+        setStep('OTP');
+      } else {
+        const role = data.user?.role;
+        if (role === 'SELLER') {
+          navigate('/seller/dashboard');
+        } else if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
+          navigate('/admin/sellers');
+        } else {
+          setError('Login successful, but no seller account found for this user.');
+          localStorage.clear();
+        }
+      }
+    } catch (err: any) {
+      const msg = err.response?.data?.detail || 'Login failed. Please try again.';
+      setError(msg);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    if (!otp.trim()) { setError('OTP is required.'); return; }
 
     try {
       setIsLoading(true);
-      const data = await login(formData.phone, formData.password);
-      const role = data.user?.role;
+      
+      const axios = require('axios');
+      const apiUrl = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/api/v1';
+      const r = await axios.post(`${apiUrl}/auth/login/verify-otp/`, { email, otp_token: otp });
+      
+      const { access, refresh, user } = r.data;
+      localStorage.setItem('accessToken', access);
+      localStorage.setItem('refreshToken', refresh);
+      localStorage.setItem('user', JSON.stringify(user));
+      setUser(user);
+      
+      const role = user?.role;
       if (role === 'SELLER') {
         navigate('/seller/dashboard');
       } else if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
-        // Admin accidentally used seller login — send them to admin panel
         navigate('/admin/sellers');
       } else {
-        setApiError('Login successful, but no seller account found for this user.');
+        setError('Login successful, but no seller account found for this user.');
         localStorage.clear();
       }
     } catch (err: any) {
-      const d = err.response?.data;
-      const msg =
-        d?.non_field_errors?.[0] ||
-        d?.detail ||
-        err.message ||
-        'Login failed. Please try again.';
-      setApiError(msg);
+      setError(err.response?.data?.detail || 'Verification failed.');
     } finally {
       setIsLoading(false);
     }
@@ -80,59 +90,62 @@ const SellerLoginPage: React.FC = () => {
           <p>Sign in to your seller account</p>
         </div>
 
-        {apiError && <div className="alert alert-error">{apiError}</div>}
+        {error && <div className="alert alert-error">{error}</div>}
+        {successMsg && <div className="alert alert-success" style={{background: '#dcfce7', color: '#166534', padding: '12px', borderRadius: '8px', marginBottom: '16px'}}>{successMsg}</div>}
 
-        <form onSubmit={handleSubmit} className="auth-form">
-          <div className="form-group">
-            <label htmlFor="phone">Phone Number</label>
-            <input
-              type="tel"
-              id="phone"
-              name="phone"
-              value={formData.phone}
-              onChange={handleChange}
-              placeholder="Enter your phone number"
-              disabled={isLoading}
-              className={errors.phone ? 'input-error' : ''}
-            />
-            {errors.phone && <span className="error-text">{errors.phone}</span>}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Enter your password"
-              disabled={isLoading}
-              className={errors.password ? 'input-error' : ''}
-            />
-            {errors.password && <span className="error-text">{errors.password}</span>}
-          </div>
-
-          <button type="submit" className="btn btn-primary btn-lg" disabled={isLoading}>
-            {isLoading ? 'Logging in...' : 'Login'}
-          </button>
-        </form>
+        {step === 'LOGIN' ? (
+          <form onSubmit={handleLogin} className="auth-form">
+            <div className="form-group">
+              <label htmlFor="email">Email Address</label>
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                disabled={isLoading}
+              />
+            </div>
+            <div className="form-group">
+              <label htmlFor="password">Password</label>
+              <input
+                type="password"
+                id="password"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                placeholder="Enter your password"
+                disabled={isLoading}
+              />
+            </div>
+            <button type="submit" className="btn btn-primary btn-lg" disabled={isLoading}>
+              {isLoading ? 'Signing in…' : 'Sign In'}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleVerifyOTP} className="auth-form">
+            <div className="form-group">
+              <label htmlFor="otp">Enter OTP</label>
+              <input
+                type="text"
+                id="otp"
+                value={otp}
+                onChange={e => setOtp(e.target.value)}
+                placeholder="6-digit OTP"
+                disabled={isLoading}
+              />
+            </div>
+            <button type="submit" className="btn btn-primary btn-lg" disabled={isLoading}>
+              {isLoading ? 'Verifying…' : 'Verify & Login'}
+            </button>
+            <button type="button" className="btn" onClick={() => setStep('LOGIN')} style={{marginTop: '12px', width: '100%', padding: '12px', background: 'transparent', border: '1px solid #ccc', borderRadius: '8px', cursor: 'pointer'}}>
+              Back to Login
+            </button>
+          </form>
+        )}
 
         <div className="auth-footer">
-          <p>
-            Don't have a seller account?{' '}
-            <Link to="/seller/register" className="link">Register here</Link>
-          </p>
-          <p>
-            Admin?{' '}
-            <Link to="/admin/login" className="link">Admin Login</Link>
-          </p>
-        </div>
-
-        <div className="test-credentials">
-          <p className="text-muted">Test Credentials:</p>
-          <code>Phone: 9000000003</code>
-          <code>Password: StrongPassword123</code>
+          <p>Don't have an account? <Link to="/seller/register" className="link">Register here</Link></p>
+          <p>Forgot password? <Link to="/forgot-password" className="link">Reset here</Link></p>
         </div>
       </div>
     </div>

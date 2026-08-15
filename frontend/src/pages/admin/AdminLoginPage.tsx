@@ -20,7 +20,7 @@ const AdminLoginPage: React.FC = () => {
 
     try {
       setIsLoading(true);
-      const data = await login(phone, password);
+      const data = await login({ phone, password });
       const role = data.user?.role;
       if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
         navigate('/admin/sellers');

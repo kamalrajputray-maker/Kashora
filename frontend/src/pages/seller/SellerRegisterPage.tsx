@@ -6,13 +6,14 @@ import '../../styles/auth.css';
 interface RegisterFormData {
   phone: string;
   email: string;
-  password: string;
-  confirmPassword: string;
+  password?: string;
+  confirmPassword?: string;
   first_name: string;
   last_name: string;
   business_name: string;
   gst_number: string;
   pan_number: string;
+  otp?: string;
 }
 
 const SellerRegisterPage: React.FC = () => {
@@ -31,60 +32,81 @@ const SellerRegisterPage: React.FC = () => {
   const [errors, setErrors] = useState<Partial<RegisterFormData>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [step, setStep] = useState<'DETAILS' | 'OTP'>('DETAILS');
   const navigate = useNavigate();
 
   const validateForm = (): boolean => {
     const newErrors: Partial<RegisterFormData> = {};
-
-    // Phone validation
-    if (!formData.phone.trim()) {
-      newErrors.phone = 'Phone number is required';
-    } else if (!/^\d{10,}$/.test(formData.phone.replace(/\D/g, ''))) {
-      newErrors.phone = 'Phone number must be at least 10 digits';
-    }
-
-    // Email validation
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Please enter a valid email';
-    }
-
-    // Password validation
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
-    }
-
-    // Confirm password
+    if (!formData.phone) newErrors.phone = 'Phone number is required';
+    if (!formData.email) newErrors.email = 'Email is required';
+    if (!formData.password) newErrors.password = 'Password is required';
     if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
     }
-
-    // Name validation
-    if (!formData.first_name.trim()) {
-      newErrors.first_name = 'First name is required';
-    }
-    if (!formData.last_name.trim()) {
-      newErrors.last_name = 'Last name is required';
-    }
-
-    // Business details validation
-    if (!formData.business_name.trim()) {
-      newErrors.business_name = 'Business name is required';
-    }
-    if (!formData.gst_number.trim()) {
-      newErrors.gst_number = 'GST number is required';
-    }
-    if (!formData.pan_number.trim()) {
-      newErrors.pan_number = 'PAN number is required';
-    } else if (formData.pan_number.length !== 10) {
-      newErrors.pan_number = 'PAN number must be 10 characters';
-    }
-
+    if (!formData.first_name) newErrors.first_name = 'First name is required';
+    if (!formData.last_name) newErrors.last_name = 'Last name is required';
+    if (!formData.business_name) newErrors.business_name = 'Business name is required';
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  const handleRegisterOrSendOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setApiError(null);
+    setSuccessMsg(null);
+    
+    if (!validateForm()) return;
+    
+    try {
+      setIsLoading(true);
+      // Attempt to register first without OTP to see if backend complains
+      const { confirmPassword, otp, ...rest } = formData;
+      await authAPI.registerSeller({ ...rest, otp_token: '' });
+      
+      // If it passes without OTP, 2FA is disabled! 
+      navigate('/seller/login', {
+        state: { message: 'Registration successful! Please login with your credentials.' },
+      });
+    } catch (err: any) {
+      const responseData = err.response?.data;
+      if (responseData?.otp_token) {
+        // OTP required! Let's send OTP.
+        await authAPI.sendOtp({ email: formData.email });
+        setSuccessMsg('OTP sent to your email.');
+        setStep('OTP');
+      } else {
+        setApiError(responseData?.detail || responseData?.email?.[0] || responseData?.phone?.[0] || 'Registration failed.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyAndRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setApiError(null);
+    
+    if (!formData.otp?.trim()) {
+      setApiError('OTP is required.');
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      const { confirmPassword, otp, ...rest } = formData;
+      await authAPI.registerSeller({ ...rest, otp_token: otp });
+      
+      navigate('/seller/login', {
+        state: { message: 'Registration successful! Please login with your credentials.' },
+      });
+    } catch (err: any) {
+      const msg = err.response?.data?.detail || err.response?.data?.otp_token?.[0] || 'Verification failed.';
+      setApiError(msg);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -93,64 +115,28 @@ const SellerRegisterPage: React.FC = () => {
       ...prev,
       [name]: value,
     }));
-    // Clear error for this field
+    // Clear error when user starts typing
     if (errors[name as keyof RegisterFormData]) {
-      setErrors((prev) => ({
-        ...prev,
-        [name]: undefined,
-      }));
+      setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setApiError(null);
-
-    if (!validateForm()) {
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      await authAPI.registerSeller({
-        phone: formData.phone,
-        email: formData.email,
-        password: formData.password,
-        first_name: formData.first_name,
-        last_name: formData.last_name,
-        business_name: formData.business_name,
-        gst_number: formData.gst_number,
-        pan_number: formData.pan_number,
-      });
-
-      // Show success and redirect to login
-      navigate('/seller/login', {
-        state: { message: 'Registration successful! Please login with your credentials.' },
-      });
-    } catch (err: any) {
-      const errorMessage =
-        err.response?.data?.detail ||
-        err.response?.data?.phone?.[0] ||
-        err.response?.data?.email?.[0] ||
-        err.message ||
-        'Registration failed. Please try again.';
-      setApiError(errorMessage);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const handleSubmit = handleRegisterOrSendOtp;
 
   return (
     <div className="auth-container">
-      <div className="auth-card auth-card-lg">
+      <div className="auth-card" style={{ maxWidth: '800px', margin: '40px auto' }}>
         <div className="auth-header">
-          <h1>Seller Registration</h1>
-          <p>Create your seller account and start selling</p>
+          <h1>Become a Seller on Kashora</h1>
+          <p>Join thousands of businesses selling to millions of customers</p>
         </div>
 
         {apiError && <div className="alert alert-error">{apiError}</div>}
+        {successMsg && <div className="alert alert-success" style={{background: '#dcfce7', color: '#166534', padding: '12px', borderRadius: '8px', marginBottom: '16px'}}>{successMsg}</div>}
 
+        {step === 'DETAILS' ? (
         <form onSubmit={handleSubmit} className="auth-form">
+          <div className="form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
           {/* Personal Information */}
           <div className="form-section">
             <h3>Personal Information</h3>
@@ -319,15 +305,34 @@ const SellerRegisterPage: React.FC = () => {
               )}
             </div>
           </div>
+          </div>
 
-          <button
-            type="submit"
-            className="btn btn-primary btn-lg btn-block"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Creating Account...' : 'Create Account'}
+          <button type="submit" className="btn btn-primary btn-block btn-lg" disabled={isLoading} style={{ marginTop: '30px' }}>
+            {isLoading ? 'Processing...' : 'Proceed & Send OTP'}
           </button>
         </form>
+        ) : (
+          <form onSubmit={handleVerifyAndRegister} className="auth-form" style={{maxWidth: '400px', margin: '0 auto'}}>
+            <div className="form-group">
+              <label htmlFor="otp">Enter OTP sent to {formData.email}</label>
+              <input
+                type="text"
+                id="otp"
+                name="otp"
+                value={formData.otp || ''}
+                onChange={handleChange}
+                placeholder="6-digit OTP"
+                disabled={isLoading}
+              />
+            </div>
+            <button type="submit" className="btn btn-primary btn-block btn-lg" disabled={isLoading}>
+              {isLoading ? 'Verifying...' : 'Verify & Register'}
+            </button>
+            <button type="button" className="btn" onClick={() => setStep('DETAILS')} style={{marginTop: '12px', width: '100%', padding: '12px', background: 'transparent', border: '1px solid #ccc', borderRadius: '8px', cursor: 'pointer'}}>
+              Back to Edit Details
+            </button>
+          </form>
+        )}
 
         <div className="auth-footer">
           <p>

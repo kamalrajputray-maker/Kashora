@@ -8,6 +8,7 @@ class SiteSettings(models.Model):
     promo_banner_image = models.ImageField(upload_to="banners/", null=True, blank=True)
     site_logo = models.ImageField(upload_to="logos/", null=True, blank=True)
     site_favicon = models.ImageField(upload_to="logos/", null=True, blank=True)
+    enable_2fa = models.BooleanField(default=True)
 
     class Meta:
         verbose_name_plural = "Site Settings"

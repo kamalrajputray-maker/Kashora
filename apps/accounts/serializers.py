@@ -46,6 +46,7 @@ class UserSerializer(serializers.ModelSerializer):
 class BuyerRegistrationSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=8)
     role = serializers.CharField(read_only=True)
+    otp_token = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     class Meta:
         model = User
@@ -56,6 +57,7 @@ class BuyerRegistrationSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "role",
+            "otp_token",
         ]
 
     def validate_phone(self, value):
@@ -69,10 +71,29 @@ class BuyerRegistrationSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         if User.objects.filter(phone=attrs["phone"]).exists():
             raise serializers.ValidationError({"phone": "A user with this phone already exists."})
+            
+        from apps.dashboard.models import SiteSettings
+        settings = SiteSettings.get_settings()
+        
+        if settings.enable_2fa:
+            from django.core.cache import cache
+            email = attrs.get("email")
+            otp_token = attrs.get("otp_token")
+            
+            if not otp_token:
+                raise serializers.ValidationError({"otp_token": "OTP token is required when 2FA is enabled."})
+            
+            cached_token = cache.get(f"valid_token_{email}")
+            if not cached_token or cached_token != otp_token:
+                raise serializers.ValidationError({"otp_token": "Invalid or expired OTP token."})
+                
+            cache.delete(f"valid_token_{email}")
+            
         return attrs
 
     def create(self, validated_data):
         password = validated_data.pop("password")
+        validated_data.pop("otp_token", None)
         user = User.objects.create_user(
             password=password,
             is_verified=True,
@@ -89,6 +110,7 @@ class SellerRegistrationSerializer(serializers.ModelSerializer):
     business_name = serializers.CharField(required=True)
     gst_number = serializers.CharField(required=True)
     pan_number = serializers.CharField(required=True)
+    otp_token = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     class Meta:
         model = User
@@ -101,6 +123,7 @@ class SellerRegistrationSerializer(serializers.ModelSerializer):
             "business_name",
             "gst_number",
             "pan_number",
+            "otp_token",
         ]
 
     def validate_phone(self, value):
@@ -114,6 +137,24 @@ class SellerRegistrationSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         if User.objects.filter(phone=attrs["phone"]).exists():
             raise serializers.ValidationError({"phone": "A user with this phone already exists."})
+            
+        from apps.dashboard.models import SiteSettings
+        settings = SiteSettings.get_settings()
+        
+        if settings.enable_2fa:
+            from django.core.cache import cache
+            email = attrs.get("email")
+            otp_token = attrs.get("otp_token")
+            
+            if not otp_token:
+                raise serializers.ValidationError({"otp_token": "OTP token is required when 2FA is enabled."})
+            
+            cached_token = cache.get(f"valid_token_{email}")
+            if not cached_token or cached_token != otp_token:
+                raise serializers.ValidationError({"otp_token": "Invalid or expired OTP token."})
+                
+            cache.delete(f"valid_token_{email}")
+            
         return attrs
 
     def create(self, validated_data):
@@ -121,6 +162,7 @@ class SellerRegistrationSerializer(serializers.ModelSerializer):
         business_name = validated_data.pop("business_name")
         gst_number = validated_data.pop("gst_number")
         pan_number = validated_data.pop("pan_number")
+        validated_data.pop("otp_token", None)
 
         user = User.objects.create_user(
             password=password,
@@ -171,15 +213,20 @@ class AdminCreateSerializer(serializers.ModelSerializer):
 class LoginSerializer(serializers.Serializer):
     phone = serializers.CharField(required=False, allow_blank=True)
     email = serializers.CharField(required=False, allow_blank=True)
-    password = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    otp_token = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     def validate(self, attrs):
         phone = attrs.get("phone")
         email = attrs.get("email")
         password = attrs.get("password")
+        otp_token = attrs.get("otp_token")
 
         if not phone and not email:
             raise serializers.ValidationError("Either phone or email is required.")
+            
+        if not password and not otp_token:
+            raise serializers.ValidationError("Either password or otp_token is required.")
 
         user = None
         if phone:
@@ -187,7 +234,16 @@ class LoginSerializer(serializers.Serializer):
         if not user and email:
             user = User.objects.filter(email=email).first()
 
-        if user is None or not user.check_password(password):
+        if user is None:
+            raise serializers.ValidationError("Invalid credentials.")
+            
+        if otp_token:
+            from django.core.cache import cache
+            cached_token = cache.get(f"valid_token_{user.email}")
+            if not cached_token or cached_token != otp_token:
+                raise serializers.ValidationError("Invalid or expired OTP token.")
+            cache.delete(f"valid_token_{user.email}")
+        elif not user.check_password(password):
             raise serializers.ValidationError("Invalid credentials.")
 
         if not user.is_active:

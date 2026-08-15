@@ -18,7 +18,7 @@ interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
-  login: (phone: string, password: string) => Promise<LoginResponse>;
+  login: (data: LoginRequest) => Promise<LoginResponse>;
   logout: () => Promise<void>;
   setUser: (user: User | null) => void;
 }
@@ -62,10 +62,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     initializeAuth();
   }, []);
 
-  const login = async (phone: string, password: string): Promise<LoginResponse> => {
+  const login = async (data: LoginRequest): Promise<LoginResponse> => {
     try {
       setError(null);
-      const response = await authAPI.login({ phone, password });
+      const response = await authAPI.login(data);
       const { access, refresh, user } = response.data;
 
       // Store tokens and user
