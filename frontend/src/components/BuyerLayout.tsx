@@ -165,6 +165,11 @@ export const BuyerLayout: React.FC<BuyerLayoutProps> = ({ children, onSearch, in
                   key={cat.id}
                   to={`/products?category=${cat.slug}`}
                   className={`byr-cat-item ${isActive ? 'byr-cat-item--active' : ''}`}
+                  onClick={() => {
+                    setTimeout(() => {
+                      document.getElementById('products-grid')?.scrollIntoView({ behavior: 'smooth' });
+                    }, 100);
+                  }}
                 >
                   <div className="byr-cat-img-wrap">
                     <img src={imgSrc} alt={cat.name} className="byr-cat-img" loading="lazy" />

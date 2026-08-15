@@ -18,6 +18,7 @@ export const ProductListPage: React.FC = () => {
   const minPrice = searchParams.get('min_price') || '';
   const maxPrice = searchParams.get('max_price') || '';
   const availability = searchParams.get('availability') || '';
+  const brand = searchParams.get('brand') || '';
   const ordering = searchParams.get('ordering') || '-created_at';
   const page = Number(searchParams.get('page')) || 1;
 
@@ -33,6 +34,7 @@ export const ProductListPage: React.FC = () => {
     if (minPrice) params.min_price = minPrice;
     if (maxPrice) params.max_price = maxPrice;
     if (availability) params.availability = availability;
+    if (brand) params.brand = brand;
     if (ordering) params.ordering = ordering;
 
     publicProductAPI.list(params)
@@ -115,11 +117,11 @@ export const ProductListPage: React.FC = () => {
           </div>
         </div>
 
-        {/* 3. Circular Categories */}
+        {/* 3. Category Circles */}
         <div className="byr-section">
           <div className="byr-h-scroll">
             {categories.slice(0, 10).map(cat => (
-              <div key={cat.id} className="byr-circle-cat" onClick={() => updateParam('category', cat.slug)}>
+              <div key={cat.id} className="byr-circle-cat" onClick={() => { updateParam('category', cat.slug); document.getElementById('products-grid')?.scrollIntoView({ behavior: 'smooth' }); }}>
                 <div className="byr-circle-cat__img-wrap">
                   {cat.image ? <img src={cat.image} className="byr-circle-cat__img" alt={cat.name} loading="lazy" /> : <span style={{fontSize: '2.5rem'}}>🛍️</span>}
                 </div>
@@ -135,19 +137,19 @@ export const ProductListPage: React.FC = () => {
               <h2 className="byr-section-header__title">Products you Love. Quality we Trust.</h2>
            </div>
            <div className="byr-h-scroll">
-             <div className="byr-promo-card" onClick={() => navigate('/products?category=women')}>
+             <div className="byr-promo-card" onClick={() => { updateParam('category', 'women'); document.getElementById('products-grid')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ cursor: 'pointer' }}>
                 <img src="https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=300&auto=format&fit=crop" className="byr-promo-card__img" alt="Lehengas" />
                 <div className="byr-promo-card__bottom">Lehengas</div>
              </div>
-             <div className="byr-promo-card" onClick={() => navigate('/products?category=men')}>
+             <div className="byr-promo-card" onClick={() => { updateParam('category', 'men'); document.getElementById('products-grid')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ cursor: 'pointer' }}>
                 <img src="https://images.unsplash.com/photo-1617137968427-85924c800a22?q=80&w=300&auto=format&fit=crop" className="byr-promo-card__img" alt="Menswear" />
                 <div className="byr-promo-card__bottom">Menswear</div>
              </div>
-             <div className="byr-promo-card" onClick={() => navigate('/products?category=women')}>
+             <div className="byr-promo-card" onClick={() => { updateParam('category', 'women'); document.getElementById('products-grid')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ cursor: 'pointer' }}>
                 <img src="https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=300&auto=format&fit=crop" className="byr-promo-card__img" alt="Sarees" />
                 <div className="byr-promo-card__bottom">Sarees</div>
              </div>
-             <div className="byr-promo-card" onClick={() => navigate('/products?category=jewellery')}>
+             <div className="byr-promo-card" onClick={() => { updateParam('category', 'jewellery'); document.getElementById('products-grid')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ cursor: 'pointer' }}>
                 <img src="https://images.unsplash.com/photo-1599643478514-4a4e09d949c8?q=80&w=300&auto=format&fit=crop" className="byr-promo-card__img" alt="Jewellery" />
                 <div className="byr-promo-card__bottom">Jewellery</div>
              </div>
@@ -161,32 +163,32 @@ export const ProductListPage: React.FC = () => {
               <span className="byr-section-header__link" style={{cursor: 'pointer'}}>VIEW ALL →</span>
            </div>
            <div className="byr-h-scroll">
-              <div className="byr-brand-card"><h3 style={{ margin: 0, color: 'var(--byr-text-muted)' }}>Mi</h3></div>
-              <div className="byr-brand-card"><h3 style={{ margin: 0, color: '#e11d48' }}>Bata</h3></div>
-              <div className="byr-brand-card"><h3 style={{ margin: 0, color: '#065f46' }}>Mamaearth</h3></div>
-              <div className="byr-brand-card"><h3 style={{ margin: 0, color: '#9333ea' }}>Plum</h3></div>
-              <div className="byr-brand-card"><h3 style={{ margin: 0, color: '#2563eb' }}>Nivea</h3></div>
-              <div className="byr-brand-card"><h3 style={{ margin: 0, color: '#059669' }}>Himalaya</h3></div>
-              <div className="byr-brand-card"><h3 style={{ margin: 0, color: '#ea580c' }}>WOW</h3></div>
+              <div className="byr-brand-card" onClick={() => { updateParam('brand', 'Mi'); document.getElementById('products-grid')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ cursor: 'pointer' }}><h3 style={{ margin: 0, color: 'var(--byr-text-muted)' }}>Mi</h3></div>
+              <div className="byr-brand-card" onClick={() => { updateParam('brand', 'Bata'); document.getElementById('products-grid')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ cursor: 'pointer' }}><h3 style={{ margin: 0, color: '#e11d48' }}>Bata</h3></div>
+              <div className="byr-brand-card" onClick={() => { updateParam('brand', 'Mamaearth'); document.getElementById('products-grid')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ cursor: 'pointer' }}><h3 style={{ margin: 0, color: '#065f46' }}>Mamaearth</h3></div>
+              <div className="byr-brand-card" onClick={() => { updateParam('brand', 'Plum'); document.getElementById('products-grid')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ cursor: 'pointer' }}><h3 style={{ margin: 0, color: '#9333ea' }}>Plum</h3></div>
+              <div className="byr-brand-card" onClick={() => { updateParam('brand', 'Nivea'); document.getElementById('products-grid')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ cursor: 'pointer' }}><h3 style={{ margin: 0, color: '#2563eb' }}>Nivea</h3></div>
+              <div className="byr-brand-card" onClick={() => { updateParam('brand', 'Himalaya'); document.getElementById('products-grid')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ cursor: 'pointer' }}><h3 style={{ margin: 0, color: '#059669' }}>Himalaya</h3></div>
+              <div className="byr-brand-card" onClick={() => { updateParam('brand', 'WOW'); document.getElementById('products-grid')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ cursor: 'pointer' }}><h3 style={{ margin: 0, color: '#ea580c' }}>WOW</h3></div>
            </div>
         </div>
 
         {/* 6. Brand Category Cards */}
         <div className="byr-section">
            <div className="byr-h-scroll">
-             <div className="byr-promo-card" onClick={() => navigate('/products?category=electronics')}>
+             <div className="byr-promo-card" onClick={() => updateParam('category', 'electronics')} style={{ cursor: 'pointer' }}>
                 <img src="https://images.unsplash.com/photo-1498049794561-7780e7231661?q=80&w=300&auto=format&fit=crop" className="byr-promo-card__img" alt="Electronics" />
                 <div className="byr-promo-card__bottom">Electronics</div>
              </div>
-             <div className="byr-promo-card" onClick={() => navigate('/products?category=beauty')}>
+             <div className="byr-promo-card" onClick={() => updateParam('category', 'beauty')} style={{ cursor: 'pointer' }}>
                 <img src="https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=300&auto=format&fit=crop" className="byr-promo-card__img" alt="Makeup" />
                 <div className="byr-promo-card__bottom">Makeup</div>
              </div>
-             <div className="byr-promo-card" onClick={() => navigate('/products?category=bags')}>
+             <div className="byr-promo-card" onClick={() => updateParam('category', 'bags')} style={{ cursor: 'pointer' }}>
                 <img src="https://images.unsplash.com/photo-1590874103328-eac38a683ce7?q=80&w=300&auto=format&fit=crop" className="byr-promo-card__img" alt="Bags" />
                 <div className="byr-promo-card__bottom">Bags</div>
              </div>
-             <div className="byr-promo-card" onClick={() => navigate('/products?category=footwear')}>
+             <div className="byr-promo-card" onClick={() => updateParam('category', 'footwear')} style={{ cursor: 'pointer' }}>
                 <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=300&auto=format&fit=crop" className="byr-promo-card__img" alt="Footwear" />
                 <div className="byr-promo-card__bottom">Footwear</div>
              </div>
@@ -205,7 +207,7 @@ export const ProductListPage: React.FC = () => {
         </div>
 
         {/* 8. Products For You */}
-        <div className="byr-section">
+        <div className="byr-section" id="products-grid">
           <h2 className="byr-section-header__title" style={{ marginBottom: 32 }}>Products For You</h2>
           <div className="byr-products-section">
             
@@ -316,6 +318,11 @@ export const ProductListPage: React.FC = () => {
                 <span className="byr-chip">
                   Price: ₹{minPrice || '0'} - ₹{maxPrice || '∞'} 
                   <span className="byr-chip__remove" onClick={() => { updateParam('min_price', ''); updateParam('max_price', ''); }}>×</span>
+                </span>
+              )}
+              {brand && (
+                <span className="byr-chip">
+                  Brand: {brand} <span className="byr-chip__remove" onClick={() => updateParam('brand', '')}>×</span>
                 </span>
               )}
               {availability && (
