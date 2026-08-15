@@ -36,6 +36,7 @@ import InventoryDetailPage from './pages/seller/InventoryDetailPage';
 // Admin Pages
 import AdminSellerListPage from './pages/admin/AdminSellerListPage';
 import AdminSellerDetailPage from './pages/admin/AdminSellerDetailPage';
+import AdminProductListPage from './pages/admin/AdminProductListPage';
 import AdminCategoryListPage from './pages/admin/categories/AdminCategoryListPage';
 import AdminCategoryFormPage from './pages/admin/categories/AdminCategoryFormPage';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
@@ -125,7 +126,7 @@ const App: React.FC = () => {
             }>
               <Route path="dashboard" element={<AdminDashboardPage />} />
               <Route path="buyers" element={<div className="adm-content">Buyer Management (coming soon)</div>} />
-              <Route path="products" element={<div className="adm-content">Product Management (coming soon)</div>} />
+              <Route path="products" element={<AdminProductListPage />} />
               <Route path="orders" element={<div className="adm-content">Order Management (coming soon)</div>} />
               <Route path="reports" element={<div className="adm-content">Reports (coming soon)</div>} />
               <Route path="sellers" element={<AdminSellerListPage />} />

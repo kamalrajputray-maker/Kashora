@@ -14,6 +14,11 @@ const AdminSellerDetailPage: React.FC = () => {
 
   const [seller, setSeller] = useState<AdminSellerDetail | null>(null);
   const [showTop, setShowTop] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [isActioning, setIsActioning] = useState(false);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [actionModal, setActionModal] = useState<ActionModal>({ type: null });
 
   // Scroll listener for Back to Top button
   useEffect(() => {
