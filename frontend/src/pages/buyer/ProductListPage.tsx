@@ -88,58 +88,43 @@ export const ProductListPage: React.FC = () => {
       initialSearchVal={query}
       onSearch={term => updateParam('search', term)}
     >
-      <div className="byr-page">
-        {/* Sidebar Filters */}
-        <div className={`byr-sidebar ${isMobileFilterOpen ? 'byr-sidebar--open' : ''}`}>
-          {isMobileFilterOpen && (
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, borderBottom: '1px solid var(--byr-card-border)', paddingBottom: 16 }}>
-              <h2 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--byr-text-1)' }}>Filters & Sorting</h2>
-              <button onClick={() => setIsMobileFilterOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--byr-text-muted)' }}>×</button>
-            </div>
-          )}
-
-
-          <h3 className="byr-sidebar__title" style={{ marginTop: 32 }}>Availability</h3>
-          <label style={{ display: 'flex', gap: 8, fontSize: '0.95rem', color: 'var(--byr-text-2)', marginBottom: 8, cursor: 'pointer' }}>
-            <input type="radio" name="avail" checked={!availability} onChange={() => updateParam('availability', '')} />
-            All Items
-          </label>
-          <label style={{ display: 'flex', gap: 8, fontSize: '0.95rem', color: 'var(--byr-text-2)', marginBottom: 8, cursor: 'pointer' }}>
-            <input type="radio" name="avail" checked={availability === 'in_stock'} onChange={() => updateParam('availability', 'in_stock')} />
-            In Stock Only
-          </label>
-
-          <h3 className="byr-sidebar__title" style={{ marginTop: 32 }}>Price Range (₹)</h3>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <input
-              className="byr-input"
-              placeholder="Min"
-              type="number"
-              value={minPrice}
-              onChange={e => updateParam('min_price', e.target.value)}
-            />
-            <input
-              className="byr-input"
-              placeholder="Max"
-              type="number"
-              value={maxPrice}
-              onChange={e => updateParam('max_price', e.target.value)}
-            />
-          </div>
-        </div>
-
+      <div className="byr-page" style={{ display: 'flex', flexDirection: 'column' }}>
         {/* Main Grid content */}
         <div className="byr-main">
+          {/* Top Filters Bar */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', padding: '16px 24px', background: 'var(--byr-card-bg)', border: '1px solid var(--byr-card-border)', borderRadius: 'var(--byr-radius)', alignItems: 'center' }}>
+            
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ fontSize: '0.95rem', color: 'var(--byr-text-3)', fontWeight: 600 }}>Availability:</span>
+              <select className="byr-input" style={{ width: 'auto', padding: '6px 12px' }} value={availability} onChange={e => updateParam('availability', e.target.value)}>
+                <option value="">All Items</option>
+                <option value="in_stock">In Stock Only</option>
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <span style={{ fontSize: '0.95rem', color: 'var(--byr-text-3)', fontWeight: 600 }}>Price Range:</span>
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <input className="byr-input" style={{ width: 80, padding: '6px 12px' }} placeholder="Min" type="number" value={minPrice} onChange={e => updateParam('min_price', e.target.value)} />
+                <span style={{ color: 'var(--byr-text-3)' }}>-</span>
+                <input className="byr-input" style={{ width: 80, padding: '6px 12px' }} placeholder="Max" type="number" value={maxPrice} onChange={e => updateParam('max_price', e.target.value)} />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: 'auto' }}>
+              <span style={{ fontSize: '0.95rem', color: 'var(--byr-text-3)', fontWeight: 600 }}>Sort By:</span>
+              <select className="byr-input" style={{ width: 'auto', padding: '6px 12px' }} value={ordering} onChange={e => updateParam('ordering', e.target.value)}>
+                <option value="-created_at">Newest First</option>
+                <option value="base_price">Price: Low to High</option>
+                <option value="-base_price">Price: High to Low</option>
+              </select>
+            </div>
+
+          </div>
+
           {/* Active Chips & Sort Row */}
           <div className="byr-filters-row">
             <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', flex: 1 }}>
-              <button 
-                className="byr-btn byr-btn--outline byr-mobile-filter-btn" 
-                style={{ marginRight: 8, marginBottom: 8 }} 
-                onClick={() => setIsMobileFilterOpen(true)}
-              >
-                ⚙️ Filter
-              </button>
               {query && (
                 <span className="byr-chip">
                   Search: "{query}" <span className="byr-chip__remove" onClick={() => updateParam('search', '')}>×</span>
@@ -165,15 +150,6 @@ export const ProductListPage: React.FC = () => {
               {(query || selectedCatSlug || minPrice || maxPrice || availability) && (
                 <button className="byr-clear-btn" onClick={clearAllFilters}>Clear All Filters</button>
               )}
-            </div>
-            
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span style={{ fontSize: '0.95rem', color: 'var(--byr-text-3)', fontWeight: 600 }}>Sort By:</span>
-              <select className="byr-input" style={{ width: 'auto' }} value={ordering} onChange={e => updateParam('ordering', e.target.value)}>
-                <option value="-created_at">Newest First</option>
-                <option value="base_price">Price: Low to High</option>
-                <option value="-base_price">Price: High to Low</option>
-              </select>
             </div>
           </div>
 
