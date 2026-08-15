@@ -1,8 +1,10 @@
-import time, random, sys, io
+import time, random, sys
 
-# Force UTF-8 output so Windows cp1252 terminal never causes UnicodeEncodeError
-sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
-sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
+# Safe UTF-8 fix: reconfigure() does not cause 'I/O on closed pipe' on shutdown
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 from playwright.sync_api import sync_playwright, expect
 
@@ -55,18 +57,36 @@ def wait_url(page, fragment, timeout=15000):
 # ------------------------------------------------------------------
 def run():
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=HEADLESS, slow_mo=SLOW_MO)
-        ctx     = browser.new_context(viewport={"width": 1400, "height": 860})
-        page    = ctx.new_page()
+        browser = p.chromium.launch(
+            headless=HEADLESS,
+            slow_mo=SLOW_MO,
+            args=[
+                "--start-maximized",        # open maximized / full screen
+                "--disable-infobars",
+                "--no-default-browser-check",
+            ],
+        )
+        # no_viewport=True lets the browser use its own maximized size
+        ctx  = browser.new_context(no_viewport=True)
+        page = ctx.new_page()
+
+        # bring window to front so it's not hidden behind other apps
+        page.bring_to_front()
 
         # -- make console errors visible --------------------------
         page.on("console", lambda m: print(f"  [browser] {m.type}: {m.text}") if m.type == "error" else None)
 
         try:
             run_tests(page)
+        except Exception as e:
+            print(f"\n  [ERROR] {e}")
+            sys.exit(1)
         finally:
             time.sleep(2)
-            browser.close()
+            try:
+                browser.close()
+            except Exception:
+                pass  # ignore pipe errors on shutdown
 
 
 def run_tests(page):
