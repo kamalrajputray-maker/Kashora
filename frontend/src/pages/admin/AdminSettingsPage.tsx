@@ -4,6 +4,8 @@ import { settingsAPI, SiteSettings } from '../../services/api';
 const AdminSettingsPage: React.FC = () => {
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [faviconFile, setFaviconFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
@@ -36,10 +38,18 @@ const AdminSettingsPage: React.FC = () => {
       if (imageFile) {
         formData.append('promo_banner_image', imageFile);
       }
+      if (logoFile) {
+        formData.append('site_logo', logoFile);
+      }
+      if (faviconFile) {
+        formData.append('site_favicon', faviconFile);
+      }
       
       const res = await settingsAPI.update(formData);
       setSettings(res.data);
       setImageFile(null); // Clear the file input state after success
+      setLogoFile(null);
+      setFaviconFile(null);
       setMessage({ type: 'success', text: 'Settings updated successfully!' });
     } catch (error) {
       setMessage({ type: 'error', text: 'Failed to update settings.' });
@@ -67,6 +77,64 @@ const AdminSettingsPage: React.FC = () => {
           {message.text}
         </div>
       )}
+
+      <div style={{ background: 'var(--adm-card-bg)', borderRadius: '12px', padding: '24px', border: '1px solid var(--adm-card-border)', maxWidth: '600px', marginBottom: '24px' }}>
+        <h3 style={{ fontSize: '1.1rem', fontWeight: 500, marginBottom: '16px', color: 'var(--adm-text-1)' }}>Global Identity Settings</h3>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 500, color: 'var(--adm-text-2)', marginBottom: '6px' }}>
+              Site Logo
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                  setLogoFile(e.target.files[0]);
+                }
+              }}
+              style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--adm-card-border)', borderRadius: '6px', fontSize: '1rem', background: 'var(--adm-bg)', color: 'var(--adm-text-1)' }}
+            />
+            {settings?.site_logo && !logoFile && (
+              <div style={{ marginTop: '8px', fontSize: '0.85rem', color: 'var(--adm-text-3)' }}>
+                Current Logo: <a href={settings.site_logo} target="_blank" rel="noreferrer" style={{ color: 'var(--adm-accent)' }}>View</a>
+              </div>
+            )}
+            {logoFile && (
+              <div style={{ marginTop: '8px', fontSize: '0.85rem', color: 'var(--adm-text-3)' }}>
+                New logo selected: {logoFile.name}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 500, color: 'var(--adm-text-2)', marginBottom: '6px' }}>
+              Site Favicon
+            </label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => {
+                if (e.target.files && e.target.files.length > 0) {
+                  setFaviconFile(e.target.files[0]);
+                }
+              }}
+              style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--adm-card-border)', borderRadius: '6px', fontSize: '1rem', background: 'var(--adm-bg)', color: 'var(--adm-text-1)' }}
+            />
+            {settings?.site_favicon && !faviconFile && (
+              <div style={{ marginTop: '8px', fontSize: '0.85rem', color: 'var(--adm-text-3)' }}>
+                Current Favicon: <a href={settings.site_favicon} target="_blank" rel="noreferrer" style={{ color: 'var(--adm-accent)' }}>View</a>
+              </div>
+            )}
+            {faviconFile && (
+              <div style={{ marginTop: '8px', fontSize: '0.85rem', color: 'var(--adm-text-3)' }}>
+                New favicon selected: {faviconFile.name}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
 
       <div style={{ background: 'var(--adm-card-bg)', borderRadius: '12px', padding: '24px', border: '1px solid var(--adm-card-border)', maxWidth: '600px' }}>
         <h3 style={{ fontSize: '1.1rem', fontWeight: 500, marginBottom: '16px', color: 'var(--adm-text-1)' }}>Buyer Homepage Promo Banner</h3>
@@ -141,13 +209,14 @@ const AdminSettingsPage: React.FC = () => {
             type="submit"
             disabled={saving}
             style={{
-              marginTop: '8px',
+              marginTop: '24px',
               padding: '12px',
               backgroundColor: 'var(--adm-accent)',
               color: '#fff',
               border: 'none',
               borderRadius: '6px',
-              fontWeight: 500,
+              fontSize: '1rem',
+              fontWeight: 600,
               cursor: saving ? 'not-allowed' : 'pointer',
               opacity: saving ? 0.7 : 1
             }}

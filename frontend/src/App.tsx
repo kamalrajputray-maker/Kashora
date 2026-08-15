@@ -1,10 +1,11 @@
 import { BrowserRouter as Router, Routes, Route, Navigate, useParams, useLocation } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
-import React from 'react';
+import React, { useEffect } from 'react';
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
 import AdminDashboardLayout from './components/AdminDashboardLayout';
 import SellerDashboardLayout from './components/SellerDashboardLayout';
+import { settingsAPI } from './services/api';
 
 // Auth Pages
 import SellerLoginPage from './pages/seller/SellerLoginPage';
@@ -66,6 +67,23 @@ const ConditionalNavbar: React.FC = () => {
   return <Navbar />;
 };
 
+const DynamicFavicon: React.FC = () => {
+  useEffect(() => {
+    settingsAPI.get().then(res => {
+      if (res.data.site_favicon) {
+        let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+        if (!link) {
+          link = document.createElement('link');
+          link.rel = 'icon';
+          document.getElementsByTagName('head')[0].appendChild(link);
+        }
+        link.href = res.data.site_favicon;
+      }
+    }).catch(console.error);
+  }, []);
+  return null;
+};
+
 const App: React.FC = () => {
   const prefersDark = useMediaQuery('(prefers-color-scheme: dark)');
   const theme = React.useMemo(() => getTheme(prefersDark ? 'dark' : 'light'), [prefersDark]);
@@ -75,6 +93,7 @@ const App: React.FC = () => {
       <CssBaseline />
       <AuthProvider>
         <Router>
+          <DynamicFavicon />
           <ConditionalNavbar />
           <Routes>
             {/* ── Public Auth Routes ── */}

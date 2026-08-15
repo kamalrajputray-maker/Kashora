@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { ThemeProvider, useTheme } from '../context/SellerThemeContext';
+import { settingsAPI, SiteSettings } from '../services/api';
 import '../styles/seller-dashboard.css';
 
 const sidebarItems = [
@@ -20,6 +21,7 @@ function LayoutInner({ children }: { children?: React.ReactNode }) {
 
   const [isSidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 768);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -28,6 +30,7 @@ function LayoutInner({ children }: { children?: React.ReactNode }) {
       if (!mobile) setSidebarOpen(true);
     };
     window.addEventListener('resize', handleResize);
+    settingsAPI.get().then(res => setSiteSettings(res.data)).catch(() => {});
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
@@ -54,10 +57,16 @@ function LayoutInner({ children }: { children?: React.ReactNode }) {
       {/* Sidebar */}
       <aside className={`sel-sidebar${isSidebarOpen ? '' : ' sel-sidebar--collapsed'}`}>
         <div className="sel-sidebar__header">
-          <div className="sel-sidebar__logo">
-            <span className="sel-sidebar__logo-mark">K</span>
-            <span className="sel-sidebar__logo-text">ashora</span>
-          </div>
+          {siteSettings?.site_logo ? (
+            <div className="sel-sidebar__logo" style={{ display: 'flex', alignItems: 'center' }}>
+              <img src={siteSettings.site_logo} alt="Kashora Logo" style={{ height: '32px', objectFit: 'contain' }} />
+            </div>
+          ) : (
+            <div className="sel-sidebar__logo">
+              <span className="sel-sidebar__logo-mark">K</span>
+              <span className="sel-sidebar__logo-text">ashora</span>
+            </div>
+          )}
           {isMobile && (
             <button
               className="sel-sidebar__close"

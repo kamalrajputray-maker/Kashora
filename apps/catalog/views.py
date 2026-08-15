@@ -2,6 +2,7 @@ from django_filters.rest_framework import DjangoFilterBackend, FilterSet, CharFi
 from rest_framework import viewsets, status, generics
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter, OrderingFilter
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
@@ -246,6 +247,7 @@ class AdminCategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all().order_by("sort_order", "name")
     serializer_class = CategorySerializer
     permission_classes = [IsAuthenticated, IsAdminOrSuperAdmin]
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
     filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
     search_fields = ["name", "description"]
     filterset_fields = ["is_active", "parent"]

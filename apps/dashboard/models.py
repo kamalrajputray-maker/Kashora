@@ -5,6 +5,8 @@ class SiteSettings(models.Model):
     promo_banner_subtitle = models.CharField(max_length=255, default="ON FIRST ORDER")
     promo_banner_button_text = models.CharField(max_length=100, default="Download Now")
     promo_banner_image = models.ImageField(upload_to="banners/", null=True, blank=True)
+    site_logo = models.ImageField(upload_to="logos/", null=True, blank=True)
+    site_favicon = models.ImageField(upload_to="logos/", null=True, blank=True)
 
     class Meta:
         verbose_name_plural = "Site Settings"

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { categoryAPI, Category, publicProductAPI, cartAPI } from '../services/api';
+import { categoryAPI, Category, publicProductAPI, cartAPI, settingsAPI, SiteSettings } from '../services/api';
 import '../styles/buyer-store.css';
 
 interface BuyerLayoutProps {
@@ -21,6 +21,7 @@ export const BuyerLayout: React.FC<BuyerLayoutProps> = ({ children, onSearch, in
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [suggestionsOpen, setSuggestionsOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
+  const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null);
   const [theme, setTheme] = useState<'light' | 'dark'>(() => localStorage.getItem('byrTheme') as 'dark' || 'light');
   
   const suggestRef = useRef<HTMLDivElement>(null);
@@ -28,6 +29,7 @@ export const BuyerLayout: React.FC<BuyerLayoutProps> = ({ children, onSearch, in
 
   useEffect(() => {
     categoryAPI.getCategories().then(res => setCategories(res.data));
+    settingsAPI.get().then(res => setSiteSettings(res.data)).catch(() => {});
     if (isAuthenticated) {
       cartAPI.get().then(res => {
         const count = res.data.items.reduce((acc, curr) => acc + curr.quantity, 0);
@@ -79,7 +81,13 @@ export const BuyerLayout: React.FC<BuyerLayoutProps> = ({ children, onSearch, in
     <div className="byr-layout" data-theme={theme}>
       <header className="byr-header">
         <div className="byr-header__main">
-          <Link to="/products" className="byr-logo byr-title-font">Kashora</Link>
+          {siteSettings?.site_logo ? (
+            <Link to="/products" className="byr-logo byr-title-font" style={{ display: 'flex', alignItems: 'center' }}>
+              <img src={siteSettings.site_logo} alt="Kashora Logo" style={{ height: '32px', objectFit: 'contain' }} />
+            </Link>
+          ) : (
+            <Link to="/products" className="byr-logo byr-title-font">Kashora</Link>
+          )}
           
           <div className="byr-search-wrap" ref={suggestRef}>
             <form onSubmit={handleSearchSubmit} className="byr-search-row">
@@ -146,19 +154,31 @@ export const BuyerLayout: React.FC<BuyerLayoutProps> = ({ children, onSearch, in
             {categories.filter(c => !c.parent).slice(0, 10).map(cat => {
               const isActive = location.search.includes(cat.slug);
               
-              // Fallback images if the DB doesn't have them
               const CAT_IMAGES: Record<string, string> = {
                 women: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=150&auto=format&fit=crop",
                 men: "https://images.unsplash.com/photo-1617137968427-85924c800a22?q=80&w=150&auto=format&fit=crop",
                 kids: "https://images.unsplash.com/photo-1622290291468-a28f7a7dc6a8?q=80&w=150&auto=format&fit=crop",
-                "home-kitchen": "https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=150&auto=format&fit=crop",
+                home: "https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=150&auto=format&fit=crop",
                 electronics: "https://images.unsplash.com/photo-1498049794561-7780e7231661?q=80&w=150&auto=format&fit=crop",
                 beauty: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=150&auto=format&fit=crop",
                 footwear: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=150&auto=format&fit=crop",
                 bags: "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?q=80&w=150&auto=format&fit=crop",
                 jewellery: "https://images.unsplash.com/photo-1599643478514-4a4e09d949c8?q=80&w=150&auto=format&fit=crop"
               };
-              const imgSrc = cat.image || CAT_IMAGES[cat.slug] || "https://images.unsplash.com/photo-1472851294608-062f824d29cc?q=80&w=150&auto=format&fit=crop";
+              
+              const slug = cat.slug.toLowerCase();
+              let fallbackImg = "";
+              if (slug.includes("women")) fallbackImg = CAT_IMAGES.women;
+              else if (slug.includes("men")) fallbackImg = CAT_IMAGES.men;
+              else if (slug.includes("kid")) fallbackImg = CAT_IMAGES.kids;
+              else if (slug.includes("home") || slug.includes("kitchen")) fallbackImg = CAT_IMAGES.home;
+              else if (slug.includes("electronic")) fallbackImg = CAT_IMAGES.electronics;
+              else if (slug.includes("beauty")) fallbackImg = CAT_IMAGES.beauty;
+              else if (slug.includes("footwear") || slug.includes("shoe")) fallbackImg = CAT_IMAGES.footwear;
+              else if (slug.includes("bag")) fallbackImg = CAT_IMAGES.bags;
+              else if (slug.includes("jewel")) fallbackImg = CAT_IMAGES.jewellery;
+
+              const imgSrc = cat.image || fallbackImg || "https://images.unsplash.com/photo-1472851294608-062f824d29cc?q=80&w=150&auto=format&fit=crop";
 
               return (
                 <Link

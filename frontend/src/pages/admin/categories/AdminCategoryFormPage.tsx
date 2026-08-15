@@ -31,7 +31,9 @@ const AdminCategoryFormPage: React.FC = () => {
     parent: null,
     is_active: true,
     sort_order: 0,
+    image: null,
   });
+  const [currentImage, setCurrentImage] = useState<string | null>(null);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,6 +57,7 @@ const AdminCategoryFormPage: React.FC = () => {
             is_active: res.data.is_active,
             sort_order: res.data.sort_order,
           });
+          setCurrentImage(res.data.image);
         })
         .catch(err => setError(err.response?.data?.detail || 'Failed to load category'))
         .finally(() => setLoading(false));
@@ -68,6 +71,13 @@ const AdminCategoryFormPage: React.FC = () => {
       finalValue = (e.target as HTMLInputElement).checked;
     } else if (name === 'parent') {
       finalValue = value === '' ? null : value;
+    } else if (type === 'file') {
+      const fileInput = e.target as HTMLInputElement;
+      if (fileInput.files && fileInput.files.length > 0) {
+        finalValue = fileInput.files[0];
+      } else {
+        return;
+      }
     }
     
     setFormData(prev => ({ ...prev, [name]: finalValue }));
@@ -78,10 +88,20 @@ const AdminCategoryFormPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
+      const submissionData = new FormData();
+      submissionData.append('name', formData.name);
+      if (formData.description) submissionData.append('description', formData.description);
+      if (formData.parent) submissionData.append('parent', formData.parent);
+      submissionData.append('is_active', formData.is_active ? 'true' : 'false');
+      submissionData.append('sort_order', String(formData.sort_order));
+      if (formData.image) {
+        submissionData.append('image', formData.image);
+      }
+
       if (isEditMode && id) {
-        await adminCategoryAPI.updateCategory(id, formData);
+        await adminCategoryAPI.updateCategory(id, submissionData);
       } else {
-        await adminCategoryAPI.createCategory(formData);
+        await adminCategoryAPI.createCategory(submissionData);
       }
       navigate('/admin/categories');
     } catch (err: any) {
@@ -139,6 +159,27 @@ const AdminCategoryFormPage: React.FC = () => {
               style={S.textarea}
               placeholder="Describe the category and types of products included..."
             />
+          </div>
+
+          <div style={S.field}>
+            <label style={S.label}>Category Image / Icon</label>
+            <input 
+              type="file" 
+              name="image" 
+              accept="image/*"
+              onChange={handleChange} 
+              style={S.input}
+            />
+            {currentImage && !formData.image && (
+              <div style={{ marginTop: '8px', fontSize: '0.85rem', color: '#64748b' }}>
+                Current Image: <a href={currentImage} target="_blank" rel="noreferrer" style={{ color: '#9333ea' }}>View</a>
+              </div>
+            )}
+            {formData.image && (
+              <div style={{ marginTop: '8px', fontSize: '0.85rem', color: '#16a34a' }}>
+                New image selected: {formData.image.name}
+              </div>
+            )}
           </div>
 
           <div style={S.field}>

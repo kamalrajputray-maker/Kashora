@@ -406,6 +406,7 @@ export interface Category {
 export interface CategoryRequest {
   name: string;
   description?: string;
+  image?: File | null;
   parent?: string | null;
   is_active?: boolean;
   sort_order?: number;
@@ -774,6 +775,8 @@ export interface SiteSettings {
   promo_banner_subtitle: string;
   promo_banner_button_text: string;
   promo_banner_image: string | null;
+  site_logo: string | null;
+  site_favicon: string | null;
 }
 
 export const settingsAPI = {

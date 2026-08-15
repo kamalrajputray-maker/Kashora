@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { AdminThemeProvider, useAdminTheme } from '../context/AdminThemeContext';
+import { settingsAPI, SiteSettings } from '../services/api';
 import '../styles/admin-dashboard.css';
 
 const sidebarItems = [
@@ -25,6 +26,7 @@ function AdminLayoutInner({ children }: { children?: React.ReactNode }) {
   // Default open on desktop, closed on mobile
   const [isSidebarOpen, setSidebarOpen] = useState(window.innerWidth >= 768);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -35,6 +37,7 @@ function AdminLayoutInner({ children }: { children?: React.ReactNode }) {
       }
     };
     window.addEventListener('resize', handleResize);
+    settingsAPI.get().then(res => setSiteSettings(res.data)).catch(() => {});
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
@@ -65,10 +68,16 @@ function AdminLayoutInner({ children }: { children?: React.ReactNode }) {
       {/* Sidebar */}
       <aside className={`adm-sidebar${isSidebarOpen ? '' : ' adm-sidebar--collapsed'}`}>
         <div className="adm-sidebar__header">
-          <div className="adm-sidebar__logo">
-            <span className="adm-sidebar__logo-mark">K</span>
-            <span className="adm-sidebar__logo-text">ashora Admin</span>
-          </div>
+          {siteSettings?.site_logo ? (
+            <div className="adm-sidebar__logo" style={{ display: 'flex', alignItems: 'center' }}>
+              <img src={siteSettings.site_logo} alt="Kashora Admin Logo" style={{ height: '32px', objectFit: 'contain' }} />
+            </div>
+          ) : (
+            <div className="adm-sidebar__logo">
+              <span className="adm-sidebar__logo-mark">K</span>
+              <span className="adm-sidebar__logo-text">ashora Admin</span>
+            </div>
+          )}
           {isMobile && (
             <button
               className="adm-sidebar__close"
