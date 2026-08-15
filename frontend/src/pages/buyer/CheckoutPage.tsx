@@ -93,106 +93,111 @@ export const CheckoutPage: React.FC = () => {
       .finally(() => setLoading(false));
   };
 
-  if (!cartData) return <BuyerLayout><div style={S.container}>Loading checkout...</div></BuyerLayout>;
+  if (!cartData) return <BuyerLayout><div className="byr-container">Loading checkout...</div></BuyerLayout>;
 
   const shippingFee = cartData.items.length > 0 ? 40 : 0;
   const grandTotal = Number(cartData.total_price) + shippingFee;
 
   return (
     <BuyerLayout>
-      <div style={S.container}>
-        <h1 style={S.title}>Checkout</h1>
+      <div className="byr-container" style={{ maxWidth: '800px' }}>
+        <h1 className="byr-title">Checkout</h1>
 
         {/* Shipping Address */}
-        <div style={S.card}>
-          <h3 style={S.sectionTitle}>Shipping Address</h3>
-          <div style={S.fieldRow}>
-            <div style={S.field}>
-              <label style={S.label}>Full Name *</label>
-              <input style={S.input} name="full_name" value={form.full_name} onChange={handleChange} placeholder="Enter full name" />
+        <div className="byr-box">
+          <h3 className="byr-section-title">Shipping Address</h3>
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+            <div className="byr-form-group" style={{ flex: '1 1 200px' }}>
+              <label className="byr-label">Full Name *</label>
+              <input className="byr-input" name="full_name" value={form.full_name} onChange={handleChange} placeholder="Enter full name" />
             </div>
-            <div style={S.field}>
-              <label style={S.label}>Phone Number *</label>
-              <input style={S.input} name="phone" value={form.phone} onChange={handleChange} placeholder="10-digit phone" />
+            <div className="byr-form-group" style={{ flex: '1 1 200px' }}>
+              <label className="byr-label">Phone Number *</label>
+              <input className="byr-input" name="phone" value={form.phone} onChange={handleChange} placeholder="10-digit phone" />
             </div>
           </div>
-          <div style={{ ...S.field, marginBottom: '1rem' }}>
-            <label style={S.label}>Address Line 1 *</label>
-            <input style={S.input} name="line1" value={form.line1} onChange={handleChange} placeholder="House No., Street, Area" />
+          <div className="byr-form-group">
+            <label className="byr-label">Address Line 1 *</label>
+            <input className="byr-input" name="line1" value={form.line1} onChange={handleChange} placeholder="House No., Street, Area" />
           </div>
-          <div style={{ ...S.field, marginBottom: '1rem' }}>
-            <label style={S.label}>Address Line 2 (Optional)</label>
-            <input style={S.input} name="line2" value={form.line2} onChange={handleChange} placeholder="Landmark, Locality" />
+          <div className="byr-form-group">
+            <label className="byr-label">Address Line 2 (Optional)</label>
+            <input className="byr-input" name="line2" value={form.line2} onChange={handleChange} placeholder="Landmark, Locality" />
           </div>
-          <div style={S.fieldRow}>
-            <div style={S.field}>
-              <label style={S.label}>City *</label>
-              <input style={S.input} name="city" value={form.city} onChange={handleChange} placeholder="City" />
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+            <div className="byr-form-group" style={{ flex: '1 1 150px' }}>
+              <label className="byr-label">City *</label>
+              <input className="byr-input" name="city" value={form.city} onChange={handleChange} placeholder="City" />
             </div>
-            <div style={S.field}>
-              <label style={S.label}>State *</label>
-              <input style={S.input} name="state" value={form.state} onChange={handleChange} placeholder="State" />
+            <div className="byr-form-group" style={{ flex: '1 1 150px' }}>
+              <label className="byr-label">State *</label>
+              <input className="byr-input" name="state" value={form.state} onChange={handleChange} placeholder="State" />
             </div>
-            <div style={{ ...S.field, maxWidth: '130px' }}>
-              <label style={S.label}>Pincode *</label>
-              <input style={S.input} name="pincode" value={form.pincode} onChange={handleChange} placeholder="6-digit" maxLength={6} />
+            <div className="byr-form-group" style={{ flex: '0 1 130px' }}>
+              <label className="byr-label">Pincode *</label>
+              <input className="byr-input" name="pincode" value={form.pincode} onChange={handleChange} placeholder="6-digit" maxLength={6} />
             </div>
           </div>
         </div>
 
         {/* Payment Method */}
-        <div style={S.card}>
-          <h3 style={S.sectionTitle}>Payment Method</h3>
-          <div style={S.fieldRow}>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem' }}>
-              <input type="radio" name="payment_method" value="COD" checked={form.payment_method === 'COD'} onChange={handleChange} />
+        <div className="byr-box">
+          <h3 className="byr-section-title">Payment Method</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', fontSize: '1rem', color: 'var(--byr-text-1)', fontWeight: 600 }}>
+              <input type="radio" name="payment_method" value="COD" checked={form.payment_method === 'COD'} onChange={handleChange} style={{ transform: 'scale(1.2)' }} />
               Cash on Delivery (COD)
             </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem', opacity: 0.5 }}>
-              <input type="radio" name="payment_method" value="PREPAID" disabled />
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'not-allowed', fontSize: '1rem', color: 'var(--byr-text-3)', fontWeight: 600, opacity: 0.6 }}>
+              <input type="radio" name="payment_method" value="PREPAID" disabled style={{ transform: 'scale(1.2)' }} />
               Online Payment (Coming Soon)
             </label>
           </div>
         </div>
 
         {/* Order Notes */}
-        <div style={S.card}>
-          <h3 style={S.sectionTitle}>Order Notes (Optional)</h3>
+        <div className="byr-box">
+          <h3 className="byr-section-title">Order Notes (Optional)</h3>
           <textarea
+            className="byr-input"
             name="notes"
             value={form.notes}
             onChange={handleChange}
-            style={{ ...S.input, width: '100%', resize: 'vertical', height: '80px' }}
+            style={{ resize: 'vertical', minHeight: '80px' }}
             placeholder="Special instructions for delivery..."
           />
         </div>
 
         {/* Order Summary */}
-        <div style={S.card}>
-          <h3 style={S.sectionTitle}>Order Summary</h3>
-          {cartData.items.map((item: any) => (
-            <div key={item.id} style={S.summaryRow}>
-              <span>{item.product_name} × {item.quantity}</span>
-              <span>₹{item.subtotal}</span>
+        <div className="byr-box" style={{ background: 'var(--byr-bg)' }}>
+          <h3 className="byr-section-title">Order Summary</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {cartData.items.map((item: any) => (
+              <div key={item.id} className="byr-summary-row" style={{ fontSize: '0.95rem' }}>
+                <span style={{ color: 'var(--byr-text-1)' }}>{item.product_name} × {item.quantity}</span>
+                <span style={{ fontWeight: 600 }}>₹{item.subtotal}</span>
+              </div>
+            ))}
+            <div style={{ borderTop: '1px solid var(--byr-card-border)', margin: '8px 0' }} />
+            <div className="byr-summary-row">
+              <span>Subtotal</span>
+              <span style={{ fontWeight: 600 }}>₹{cartData.total_price}</span>
             </div>
-          ))}
-          <div style={S.summaryRow}>
-            <span>Subtotal</span>
-            <span>₹{cartData.total_price}</span>
-          </div>
-          <div style={S.summaryRow}>
-            <span>Shipping</span>
-            <span>₹{shippingFee}</span>
-          </div>
-          <div style={S.totalRow}>
-            <span>Total to Pay</span>
-            <span>₹{grandTotal}</span>
+            <div className="byr-summary-row">
+              <span>Shipping Fee</span>
+              <span style={{ fontWeight: 600 }}>₹{shippingFee}</span>
+            </div>
+            <div className="byr-summary-row byr-summary-row--total" style={{ borderTopStyle: 'solid' }}>
+              <span>Total to Pay</span>
+              <span>₹{grandTotal}</span>
+            </div>
           </div>
 
-          {error && <div style={S.errorMsg}>⚠️ {error}</div>}
+          {error && <div style={{ color: 'var(--badge-red-txt)', background: 'var(--badge-red-bg)', padding: '12px', borderRadius: '8px', fontSize: '0.9rem', fontWeight: 600 }}>⚠️ {error}</div>}
 
           <button
-            style={{ ...S.placeBtn, opacity: loading ? 0.7 : 1, cursor: loading ? 'not-allowed' : 'pointer' }}
+            className="byr-btn byr-btn--primary"
+            style={{ width: '100%', marginTop: '16px', padding: '16px' }}
             onClick={handleSubmit}
             disabled={loading}
           >
