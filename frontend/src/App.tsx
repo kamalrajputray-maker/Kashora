@@ -44,6 +44,9 @@ import AdminDashboardPage from './pages/admin/AdminDashboardPage';
 // Not Found
 import NotFoundPage from './pages/NotFoundPage';
 
+// E2E Test Runner
+import E2ERunnerPage from './pages/E2ERunnerPage';
+
 import { ThemeProvider, CssBaseline, useMediaQuery } from '@mui/material';
 import { getTheme } from './theme';
 
@@ -74,6 +77,9 @@ const App: React.FC = () => {
           <ConditionalNavbar />
           <Routes>
             {/* ── Public Auth Routes ── */}
+            {/* ── E2E Test Runner (public) ── */}
+            <Route path="/e2e-runner" element={<E2ERunnerPage />} />
+
             <Route path="/login" element={<BuyerLoginPage />} />
             <Route path="/seller/login" element={<SellerLoginPage />} />
             <Route path="/seller/register" element={<SellerRegisterPage />} />

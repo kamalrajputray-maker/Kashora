@@ -1,5 +1,15 @@
 /* Global Styles */
 
+/* E2E Runner animations */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+
 * {
   margin: 0;
   padding: 0;
