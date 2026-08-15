@@ -10,6 +10,7 @@ export const ProductListPage: React.FC = () => {
   const [products, setProducts] = useState<PublicProduct[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
   // Filter & Search states from URL Params
   const query = searchParams.get('search') || '';
@@ -89,34 +90,14 @@ export const ProductListPage: React.FC = () => {
     >
       <div className="byr-page">
         {/* Sidebar Filters */}
-        <div className="byr-sidebar">
-          <h3 className="byr-sidebar__title">Categories</h3>
-          <span 
-            className={`byr-sidebar__link ${!selectedCatSlug ? 'byr-sidebar__link--active' : ''}`} 
-            onClick={() => updateParam('category', '')}
-          >
-            All Products
-          </span>
-          {categories.map(cat => (
-            <div key={cat.id}>
-              <span
-                className={`byr-sidebar__link ${selectedCatSlug === cat.slug ? 'byr-sidebar__link--active' : ''}`}
-                onClick={() => updateParam('category', cat.slug)}
-              >
-                {cat.name}
-              </span>
-              {cat.children && cat.children.map(sub => (
-                <span
-                  key={sub.id}
-                  className={`byr-sidebar__link ${selectedCatSlug === sub.slug ? 'byr-sidebar__link--active' : ''}`}
-                  style={{ paddingLeft: '24px', fontSize: '0.85rem' }}
-                  onClick={() => updateParam('category', sub.slug)}
-                >
-                  └ {sub.name}
-                </span>
-              ))}
+        <div className={`byr-sidebar ${isMobileFilterOpen ? 'byr-sidebar--open' : ''}`}>
+          {isMobileFilterOpen && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24, borderBottom: '1px solid var(--byr-card-border)', paddingBottom: 16 }}>
+              <h2 style={{ margin: 0, fontSize: '1.2rem', color: 'var(--byr-text-1)' }}>Filters & Sorting</h2>
+              <button onClick={() => setIsMobileFilterOpen(false)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--byr-text-muted)' }}>×</button>
             </div>
-          ))}
+          )}
+
 
           <h3 className="byr-sidebar__title" style={{ marginTop: 32 }}>Availability</h3>
           <label style={{ display: 'flex', gap: 8, fontSize: '0.95rem', color: 'var(--byr-text-2)', marginBottom: 8, cursor: 'pointer' }}>
@@ -152,6 +133,13 @@ export const ProductListPage: React.FC = () => {
           {/* Active Chips & Sort Row */}
           <div className="byr-filters-row">
             <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', flex: 1 }}>
+              <button 
+                className="byr-btn byr-btn--outline byr-mobile-filter-btn" 
+                style={{ marginRight: 8, marginBottom: 8 }} 
+                onClick={() => setIsMobileFilterOpen(true)}
+              >
+                ⚙️ Filter
+              </button>
               {query && (
                 <span className="byr-chip">
                   Search: "{query}" <span className="byr-chip__remove" onClick={() => updateParam('search', '')}>×</span>

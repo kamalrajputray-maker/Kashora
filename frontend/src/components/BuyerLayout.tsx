@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { categoryAPI, Category, publicProductAPI, cartAPI } from '../services/api';
 import '../styles/buyer-store.css';
@@ -12,6 +12,7 @@ interface BuyerLayoutProps {
 
 export const BuyerLayout: React.FC<BuyerLayoutProps> = ({ children, onSearch, initialSearchVal = '' }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, logout, isAuthenticated } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [hoveredCatId, setHoveredCatId] = useState<string | null>(null);
@@ -139,36 +140,25 @@ export const BuyerLayout: React.FC<BuyerLayoutProps> = ({ children, onSearch, in
 
         <div className="byr-catnav">
           <div className="byr-catnav__inner">
-            {categories.filter(c => !c.parent).slice(0, 10).map(cat => (
-              <div
-                key={cat.id} style={{ position: 'relative' }}
-                onMouseEnter={() => setHoveredCatId(cat.id)}
-                onMouseLeave={() => setHoveredCatId(null)}
-              >
+            {categories.filter(c => !c.parent).slice(0, 10).map(cat => {
+              const isActive = location.search.includes(cat.slug);
+              return (
                 <Link
+                  key={cat.id}
                   to={`/products?category=${cat.slug}`}
-                  className={`byr-cat-item ${hoveredCatId === cat.id ? 'byr-cat-item--active' : ''}`}
+                  className={`byr-cat-item ${isActive ? 'byr-cat-item--active' : ''}`}
                 >
-                  {cat.name}
-                </Link>
-                {hoveredCatId === cat.id && cat.children && cat.children.length > 0 && (
-                  <div className="byr-mega-menu">
-                    {cat.children.map(sub => (
-                      <div key={sub.id}>
-                        <Link to={`/products?category=${sub.slug}`} className="byr-mega-title">
-                          {sub.name}
-                        </Link>
-                        {sub.children && sub.children.map(child => (
-                          <Link key={child.id} to={`/products?category=${child.slug}`} className="byr-mega-item">
-                            {child.name}
-                          </Link>
-                        ))}
-                      </div>
-                    ))}
+                  <div className="byr-cat-img-wrap">
+                    {cat.image ? (
+                      <img src={cat.image} alt={cat.name} className="byr-cat-img" loading="lazy" />
+                    ) : (
+                      <span style={{ fontSize: '1.8rem' }}>🛍️</span>
+                    )}
                   </div>
-                )}
-              </div>
-            ))}
+                  <span className="byr-cat-label">{cat.name}</span>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </header>
