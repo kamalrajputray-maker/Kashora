@@ -159,3 +159,30 @@ class DashboardChartsView(APIView):
             'seller_status': seller_status,
             'product_status': product_status,
         })
+
+
+class SiteSettingsView(APIView):
+    """
+    GET /api/v1/dashboard/settings/ (Public)
+    PUT /api/v1/dashboard/settings/ (Admin/SuperAdmin)
+    """
+    def get_permissions(self):
+        if self.request.method in ['PUT', 'PATCH']:
+            return [IsAuthenticated(), IsAdminOrSuperAdmin()]
+        return []
+
+    def get(self, request):
+        from apps.dashboard.models import SiteSettings
+        from apps.dashboard.serializers import SiteSettingsSerializer
+        settings = SiteSettings.get_settings()
+        return Response(SiteSettingsSerializer(settings, context={'request': request}).data)
+
+    def put(self, request):
+        from apps.dashboard.models import SiteSettings
+        from apps.dashboard.serializers import SiteSettingsSerializer
+        settings = SiteSettings.get_settings()
+        serializer = SiteSettingsSerializer(settings, data=request.data, partial=True, context={'request': request})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=400)

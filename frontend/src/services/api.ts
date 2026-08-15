@@ -769,5 +769,22 @@ export const sellerOrderAPI = {
     apiClient.patch<SellerOrderItem>(`seller/orders/${id}/update-status/`, { item_status }),
 };
 
+export interface SiteSettings {
+  promo_banner_title: string;
+  promo_banner_subtitle: string;
+  promo_banner_button_text: string;
+  promo_banner_image: string | null;
+}
+
+export const settingsAPI = {
+  get: () => apiClient.get<SiteSettings>('dashboard/settings/'),
+  update: (data: FormData | Partial<SiteSettings>) => {
+    const isFormData = data instanceof FormData;
+    return apiClient.put<SiteSettings>('dashboard/settings/', data, {
+      headers: isFormData ? { 'Content-Type': 'multipart/form-data' } : undefined,
+    });
+  }
+};
+
 export default apiClient;
 

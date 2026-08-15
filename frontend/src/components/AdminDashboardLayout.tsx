@@ -12,6 +12,7 @@ const sidebarItems = [
   { name: 'Products',    path: '/admin/products',      icon: '≡', roles: ['ADMIN', 'SUPER_ADMIN'] },
   { name: 'Orders',      path: '/admin/orders',        icon: '◈', roles: ['ADMIN', 'SUPER_ADMIN'] },
   { name: 'Reports',     path: '/admin/reports',       icon: '◎', roles: ['ADMIN', 'SUPER_ADMIN'] },
+  { name: 'Settings',    path: '/admin/settings',      icon: '⚙', roles: ['ADMIN', 'SUPER_ADMIN'] },
   { name: 'Admins',      path: '/super-admin/admins',  icon: '▣', roles: ['SUPER_ADMIN'] },
 ];
 

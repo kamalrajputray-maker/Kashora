@@ -40,6 +40,7 @@ import AdminProductListPage from './pages/admin/AdminProductListPage';
 import AdminCategoryListPage from './pages/admin/categories/AdminCategoryListPage';
 import AdminCategoryFormPage from './pages/admin/categories/AdminCategoryFormPage';
 import AdminDashboardPage from './pages/admin/AdminDashboardPage';
+import AdminSettingsPage from './pages/admin/AdminSettingsPage';
 
 // Not Found
 import NotFoundPage from './pages/NotFoundPage';
@@ -140,6 +141,7 @@ const App: React.FC = () => {
               <Route path="categories" element={<AdminCategoryListPage />} />
               <Route path="categories/create" element={<AdminCategoryFormPage />} />
               <Route path="categories/:id/edit" element={<AdminCategoryFormPage />} />
+              <Route path="settings" element={<AdminSettingsPage />} />
               <Route path="*" element={<Navigate to="/admin/dashboard" replace />} />
             </Route>
 

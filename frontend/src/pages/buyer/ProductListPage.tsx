@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { publicProductAPI, categoryAPI, Category, PublicProduct } from '../../services/api';
+import { publicProductAPI, categoryAPI, settingsAPI, Category, PublicProduct, SiteSettings } from '../../services/api';
 import BuyerLayout from '../../components/BuyerLayout';
 
 export const ProductListPage: React.FC = () => {
@@ -8,6 +8,7 @@ export const ProductListPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<PublicProduct[]>([]);
+  const [siteSettings, setSiteSettings] = useState<SiteSettings | null>(null);
   const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
@@ -24,6 +25,7 @@ export const ProductListPage: React.FC = () => {
 
   useEffect(() => {
     categoryAPI.getCategories().then(res => setCategories(res.data));
+    settingsAPI.get().then(res => setSiteSettings(res.data)).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -98,11 +100,16 @@ export const ProductListPage: React.FC = () => {
         <div className="byr-section">
           <div className="byr-hero">
             <div className="byr-hero__content">
-              <h1 className="byr-hero__title">UP TO 35% OFF</h1>
-              <p className="byr-hero__subtitle">On your first order. Shop exclusive offers and trends.</p>
-              <button className="byr-btn byr-btn--primary" onClick={() => navigate('/products')}>Shop Now</button>
+              <h1 className="byr-hero__title">{siteSettings?.promo_banner_title || 'UP TO 35% OFF'}</h1>
+              <p className="byr-hero__subtitle">{siteSettings?.promo_banner_subtitle || 'On your first order. Shop exclusive offers and trends.'}</p>
+              <button className="byr-btn byr-btn--primary" onClick={() => navigate('/products')}>{siteSettings?.promo_banner_button_text || 'Shop Now'}</button>
             </div>
-            <img src="https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=800&auto=format&fit=crop" alt="Hero" className="byr-hero__img" />
+            <img 
+              src={siteSettings?.promo_banner_image || "https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=800&auto=format&fit=crop"} 
+              alt="Hero" 
+              className="byr-hero__img" 
+              style={{ objectFit: 'cover' }}
+            />
           </div>
         </div>
 
@@ -195,10 +202,10 @@ export const ProductListPage: React.FC = () => {
         <div className="byr-section">
            <div className="byr-promo-strip">
               <div>
-                <div className="byr-promo-strip__title">UP TO 35% OFF</div>
-                <div style={{ fontSize: '1.25rem' }}>ON FIRST ORDER</div>
+                <div className="byr-promo-strip__title">{siteSettings?.promo_banner_title || 'UP TO 35% OFF'}</div>
+                <div style={{ fontSize: '1.25rem' }}>{siteSettings?.promo_banner_subtitle || 'ON FIRST ORDER'}</div>
               </div>
-              <button className="byr-promo-strip__btn">Download Now</button>
+              <button className="byr-promo-strip__btn">{siteSettings?.promo_banner_button_text || 'Download Now'}</button>
            </div>
         </div>
 
