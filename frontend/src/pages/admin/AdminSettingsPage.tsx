@@ -7,7 +7,8 @@ const AdminSettingsPage: React.FC = () => {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const [faviconFile, setFaviconFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [savingBanner, setSavingBanner] = useState(false);
+  const [savingIdentity, setSavingIdentity] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
@@ -25,10 +26,32 @@ const AdminSettingsPage: React.FC = () => {
     }
   };
 
-  const handleSave = async (e: React.FormEvent) => {
+  const handleIdentitySave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!settings) return;
-    setSaving(true);
+    setSavingIdentity(true);
+    setMessage(null);
+    try {
+      const formData = new FormData();
+      if (logoFile) formData.append('site_logo', logoFile);
+      if (faviconFile) formData.append('site_favicon', faviconFile);
+      
+      const res = await settingsAPI.update(formData);
+      setSettings(res.data);
+      setLogoFile(null);
+      setFaviconFile(null);
+      setMessage({ type: 'success', text: 'Global Identity Settings updated successfully!' });
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Failed to update identity settings.' });
+    } finally {
+      setSavingIdentity(false);
+    }
+  };
+
+  const handleBannerSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!settings) return;
+    setSavingBanner(true);
     setMessage(null);
     try {
       const formData = new FormData();
@@ -38,23 +61,15 @@ const AdminSettingsPage: React.FC = () => {
       if (imageFile) {
         formData.append('promo_banner_image', imageFile);
       }
-      if (logoFile) {
-        formData.append('site_logo', logoFile);
-      }
-      if (faviconFile) {
-        formData.append('site_favicon', faviconFile);
-      }
       
       const res = await settingsAPI.update(formData);
       setSettings(res.data);
-      setImageFile(null); // Clear the file input state after success
-      setLogoFile(null);
-      setFaviconFile(null);
-      setMessage({ type: 'success', text: 'Settings updated successfully!' });
+      setImageFile(null);
+      setMessage({ type: 'success', text: 'Promo Banner Settings updated successfully!' });
     } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to update settings.' });
+      setMessage({ type: 'error', text: 'Failed to update banner settings.' });
     } finally {
-      setSaving(false);
+      setSavingBanner(false);
     }
   };
 
@@ -80,8 +95,7 @@ const AdminSettingsPage: React.FC = () => {
 
       <div style={{ background: 'var(--adm-card-bg)', borderRadius: '12px', padding: '24px', border: '1px solid var(--adm-card-border)', maxWidth: '600px', marginBottom: '24px' }}>
         <h3 style={{ fontSize: '1.1rem', fontWeight: 500, marginBottom: '16px', color: 'var(--adm-text-1)' }}>Global Identity Settings</h3>
-        
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <form onSubmit={handleIdentitySave} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div>
             <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 500, color: 'var(--adm-text-2)', marginBottom: '6px' }}>
               Site Logo
@@ -133,13 +147,31 @@ const AdminSettingsPage: React.FC = () => {
               </div>
             )}
           </div>
-        </div>
+          <button
+            type="submit"
+            disabled={savingIdentity}
+            style={{
+              marginTop: '16px',
+              padding: '12px',
+              backgroundColor: 'var(--adm-accent)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '6px',
+              fontSize: '1rem',
+              fontWeight: 600,
+              cursor: savingIdentity ? 'not-allowed' : 'pointer',
+              opacity: savingIdentity ? 0.7 : 1
+            }}
+          >
+            {savingIdentity ? 'Saving...' : 'Save Identity Settings'}
+          </button>
+        </form>
       </div>
 
       <div style={{ background: 'var(--adm-card-bg)', borderRadius: '12px', padding: '24px', border: '1px solid var(--adm-card-border)', maxWidth: '600px' }}>
         <h3 style={{ fontSize: '1.1rem', fontWeight: 500, marginBottom: '16px', color: 'var(--adm-text-1)' }}>Buyer Homepage Promo Banner</h3>
         
-        <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <form onSubmit={handleBannerSave} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div>
             <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: 500, color: 'var(--adm-text-2)', marginBottom: '6px' }}>
               Banner Title
@@ -207,7 +239,7 @@ const AdminSettingsPage: React.FC = () => {
 
           <button
             type="submit"
-            disabled={saving}
+            disabled={savingBanner}
             style={{
               marginTop: '24px',
               padding: '12px',
@@ -217,11 +249,11 @@ const AdminSettingsPage: React.FC = () => {
               borderRadius: '6px',
               fontSize: '1rem',
               fontWeight: 600,
-              cursor: saving ? 'not-allowed' : 'pointer',
-              opacity: saving ? 0.7 : 1
+              cursor: savingBanner ? 'not-allowed' : 'pointer',
+              opacity: savingBanner ? 0.7 : 1
             }}
           >
-            {saving ? 'Saving...' : 'Save Settings'}
+            {savingBanner ? 'Saving...' : 'Save Banner Settings'}
           </button>
         </form>
       </div>
