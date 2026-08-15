@@ -128,7 +128,7 @@ export const ProductDetailPage: React.FC = () => {
       <div style={S.container}>
         <button style={S.backBtn} onClick={() => navigate('/products')}>← Back to Catalog</button>
         
-        <div style={S.layout}>
+        <div className="byr-pdp-layout">
           {/* Left: Gallery */}
           <div style={S.gallery}>
             <div style={S.mainImage}>
@@ -198,7 +198,7 @@ export const ProductDetailPage: React.FC = () => {
             </div>
 
             {/* Action Buttons: Add to Cart and Wishlist */}
-            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+            <div className="byr-pdp-actions">
               <button
                 style={{
                   flex: 1, padding: '0.85rem', border: 'none', background: inStock ? '#f43f5e' : '#cbd5e1', color: '#fff',

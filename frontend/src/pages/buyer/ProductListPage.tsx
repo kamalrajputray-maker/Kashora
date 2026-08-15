@@ -53,10 +53,12 @@ export const ProductListPage: React.FC = () => {
     }
     updated.set('page', '1'); // reset page on filter change
     setSearchParams(updated);
+    setIsMobileFilterOpen(false);
   };
 
   const clearAllFilters = () => {
     setSearchParams(new URLSearchParams());
+    setIsMobileFilterOpen(false);
   };
 
   const handlePageChange = (p: number) => {
@@ -253,6 +255,10 @@ export const ProductListPage: React.FC = () => {
                 <input type="radio" name="avail" checked={availability === 'in_stock'} onChange={() => updateParam('availability', 'in_stock')} />
                 In Stock Only
               </label>
+              <label style={{ display: 'flex', gap: 8, fontSize: '0.95rem', color: 'var(--byr-text-2)', marginBottom: 8, cursor: 'pointer' }}>
+                <input type="radio" name="avail" checked={availability === 'out_of_stock'} onChange={() => updateParam('availability', 'out_of_stock')} />
+                Out of Stock Only
+              </label>
 
               <h3 className="byr-sidebar__title" style={{ marginTop: 32 }}>Price Range (₹)</h3>
               <div style={{ display: 'flex', gap: 8 }}>
@@ -362,11 +368,11 @@ export const ProductListPage: React.FC = () => {
                         
                         <div className="byr-card__delivery">🚚 Free Delivery</div>
                         
-                        <span className={`byr-card__badge ${p.in_stock ? 'byr-card__badge--in' : 'byr-card__badge--out'}`} style={{ display: 'none' }}>
+                        <span className={`byr-card__badge ${p.in_stock ? 'byr-card__badge--in' : 'byr-card__badge--out'}`}>
                           {p.in_stock ? 'In Stock' : 'Out of Stock'}
                         </span>
 
-                        <button className="byr-card__add-btn" onClick={(e) => { e.stopPropagation(); alert('Added to cart!'); }}>Add to Cart</button>
+                        <button className="byr-card__add-btn" onClick={(e) => { e.stopPropagation(); navigate(`/products/${p.slug}`); }}>View Details</button>
                       </div>
                     </div>
                   );
