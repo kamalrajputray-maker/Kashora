@@ -114,6 +114,7 @@ export const BuyerLayout: React.FC<BuyerLayoutProps> = ({ children, onSearch, in
               {theme === 'light' ? '🌙' : '☀️'}
             </button>
             <Link to={getSellerRoute()} className="byr-nav-link">Become a Seller</Link>
+            <Link to="/investors" className="byr-nav-link">Investor Relations</Link>
             <Link to="/cart" className="byr-nav-link">🛒 Cart {cartCount > 0 && `(${cartCount})`}</Link>
             
             {isAuthenticated ? (
@@ -124,9 +125,11 @@ export const BuyerLayout: React.FC<BuyerLayoutProps> = ({ children, onSearch, in
                 {accountOpen && (
                   <div className="byr-account-dropdown">
                     <div className="byr-dropdown-header">Hi, {user?.first_name}</div>
-                    <Link to="/profile" className="byr-dropdown-item" onClick={() => setAccountOpen(false)}>My Profile</Link>
+                    <Link to="/profile" className="byr-dropdown-item" onClick={() => setAccountOpen(false)}>My Account</Link>
                     <Link to="/orders" className="byr-dropdown-item" onClick={() => setAccountOpen(false)}>My Orders</Link>
                     <Link to="/wishlist" className="byr-dropdown-item" onClick={() => setAccountOpen(false)}>Wishlist</Link>
+                    <Link to="/notifications" className="byr-dropdown-item" onClick={() => setAccountOpen(false)}>Notifications</Link>
+                    <Link to="/help" className="byr-dropdown-item" onClick={() => setAccountOpen(false)}>Help Center</Link>
                     <hr style={{ border: 'none', borderBottom: '1px solid var(--byr-card-border)', margin: '8px 0' }} />
                     <span className="byr-dropdown-item" onClick={handleLogout}>Logout</span>
                   </div>
@@ -142,6 +145,21 @@ export const BuyerLayout: React.FC<BuyerLayoutProps> = ({ children, onSearch, in
           <div className="byr-catnav__inner">
             {categories.filter(c => !c.parent).slice(0, 10).map(cat => {
               const isActive = location.search.includes(cat.slug);
+              
+              // Fallback images if the DB doesn't have them
+              const CAT_IMAGES: Record<string, string> = {
+                women: "https://images.unsplash.com/photo-1595777457583-95e059d581b8?q=80&w=150&auto=format&fit=crop",
+                men: "https://images.unsplash.com/photo-1617137968427-85924c800a22?q=80&w=150&auto=format&fit=crop",
+                kids: "https://images.unsplash.com/photo-1622290291468-a28f7a7dc6a8?q=80&w=150&auto=format&fit=crop",
+                "home-kitchen": "https://images.unsplash.com/photo-1556910103-1c02745aae4d?q=80&w=150&auto=format&fit=crop",
+                electronics: "https://images.unsplash.com/photo-1498049794561-7780e7231661?q=80&w=150&auto=format&fit=crop",
+                beauty: "https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=150&auto=format&fit=crop",
+                footwear: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=150&auto=format&fit=crop",
+                bags: "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?q=80&w=150&auto=format&fit=crop",
+                jewellery: "https://images.unsplash.com/photo-1599643478514-4a4e09d949c8?q=80&w=150&auto=format&fit=crop"
+              };
+              const imgSrc = cat.image || CAT_IMAGES[cat.slug] || "https://images.unsplash.com/photo-1472851294608-062f824d29cc?q=80&w=150&auto=format&fit=crop";
+
               return (
                 <Link
                   key={cat.id}
@@ -149,11 +167,7 @@ export const BuyerLayout: React.FC<BuyerLayoutProps> = ({ children, onSearch, in
                   className={`byr-cat-item ${isActive ? 'byr-cat-item--active' : ''}`}
                 >
                   <div className="byr-cat-img-wrap">
-                    {cat.image ? (
-                      <img src={cat.image} alt={cat.name} className="byr-cat-img" loading="lazy" />
-                    ) : (
-                      <span style={{ fontSize: '1.8rem' }}>🛍️</span>
-                    )}
+                    <img src={imgSrc} alt={cat.name} className="byr-cat-img" loading="lazy" />
                   </div>
                   <span className="byr-cat-label">{cat.name}</span>
                 </Link>

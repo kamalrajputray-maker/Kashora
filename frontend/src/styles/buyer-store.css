@@ -255,14 +255,101 @@
   text-align: center; margin-top: 48px; font-size: 0.85rem; color: var(--byr-text-muted);
 }
 
+/* ── Homepage Specific Redesign Sections ─────────────────────────────── */
+.byr-homepage { display: flex; flex-direction: column; gap: 40px; width: 100%; }
+.byr-section { padding: 0 32px; max-width: 1440px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+
+/* Hero Banner */
+.byr-hero {
+  background: linear-gradient(135deg, var(--byr-accent-light) 0%, #fff 100%);
+  border-radius: var(--byr-radius); overflow: hidden;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 48px; border: 1px solid var(--byr-card-border);
+  position: relative; margin-top: 24px;
+}
+.byr-hero__content { flex: 1; max-width: 50%; z-index: 2; }
+.byr-hero__title { font-size: 2.5rem; font-weight: 800; color: var(--byr-text-1); margin-bottom: 16px; line-height: 1.2; }
+.byr-hero__subtitle { font-size: 1.25rem; color: var(--byr-text-2); margin-bottom: 32px; }
+.byr-hero__img { width: 45%; height: auto; object-fit: contain; z-index: 1; border-radius: var(--byr-radius); }
+
+/* Benefits Strip */
+.byr-benefits {
+  display: flex; justify-content: space-between; background: var(--byr-card-bg);
+  border: 1px solid var(--byr-card-border); border-radius: var(--byr-radius-sm);
+  padding: 24px 32px; box-shadow: var(--byr-shadow-sm);
+  overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch;
+}
+.byr-benefits::-webkit-scrollbar { display: none; }
+.byr-benefit-item {
+  display: flex; align-items: center; gap: 12px; font-weight: 700; color: var(--byr-text-1); font-size: 1rem; min-width: fit-content;
+}
+
+/* Horizontal Carousels */
+.byr-h-scroll {
+  display: flex; gap: 24px; overflow-x: auto; padding-bottom: 16px;
+  scrollbar-width: none; -webkit-overflow-scrolling: touch;
+}
+.byr-h-scroll::-webkit-scrollbar { display: none; }
+
+/* Circle Categories */
+.byr-circle-cat {
+  display: flex; flex-direction: column; align-items: center; gap: 12px; cursor: pointer; text-decoration: none;
+}
+.byr-circle-cat__img-wrap {
+  width: 96px; height: 96px; border-radius: 50%; background: var(--byr-accent-light);
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+  border: 2px solid transparent; transition: all var(--byr-transition);
+}
+.byr-circle-cat:hover .byr-circle-cat__img-wrap { border-color: var(--byr-accent); transform: scale(1.05); }
+.byr-circle-cat__img { width: 100%; height: 100%; object-fit: cover; }
+.byr-circle-cat__label { font-weight: 600; color: var(--byr-text-1); font-size: 0.95rem; text-align: center; }
+
+/* Section Headers */
+.byr-section-header {
+  display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px;
+}
+.byr-section-header__title { font-size: 1.75rem; font-weight: 800; color: var(--byr-text-1); }
+.byr-section-header__link { font-weight: 700; color: var(--byr-accent); text-decoration: none; font-size: 0.95rem; }
+
+/* Brand / Cat Cards */
+.byr-brand-card {
+  min-width: 160px; height: 100px; background: var(--byr-card-bg);
+  border: 1px solid var(--byr-card-border); border-radius: var(--byr-radius);
+  display: flex; align-items: center; justify-content: center; padding: 16px;
+  box-shadow: var(--byr-shadow-sm); cursor: pointer; transition: all var(--byr-transition);
+}
+.byr-brand-card:hover { transform: translateY(-4px); box-shadow: var(--byr-shadow-md); border-color: var(--byr-accent); }
+.byr-brand-card__img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
+.byr-promo-card {
+  min-width: 200px; background: var(--byr-card-bg); border-radius: var(--byr-radius);
+  overflow: hidden; border: 1px solid var(--byr-card-border);
+  box-shadow: var(--byr-shadow-sm); cursor: pointer; transition: all var(--byr-transition);
+}
+.byr-promo-card:hover { transform: translateY(-4px); box-shadow: var(--byr-shadow-md); }
+.byr-promo-card__img { width: 100%; height: 200px; object-fit: cover; background: var(--byr-bg); }
+.byr-promo-card__bottom { padding: 12px; text-align: center; background: var(--byr-accent-light); font-weight: 700; color: var(--byr-accent); }
+
+/* Promo Banners */
+.byr-promo-strip {
+  background: var(--byr-text-1); border-radius: var(--byr-radius); padding: 32px 48px;
+  display: flex; justify-content: space-between; align-items: center; color: #fff;
+}
+.byr-promo-strip__title { font-size: 2rem; font-weight: 800; margin-bottom: 8px; }
+.byr-promo-strip__btn { background: #fff; color: var(--byr-text-1); border: none; padding: 12px 24px; border-radius: 99px; font-weight: 800; cursor: pointer; }
+
 /* ── Products Page specific ─────────────────────────────── */
-.byr-page { padding: 32px; max-width: 100%; margin: 0 auto; display: flex; flex-direction: column; gap: 32px; width: 100%; box-sizing: border-box; }
+.byr-page { padding: 32px; max-width: 1440px; margin: 0 auto; display: flex; flex-direction: column; gap: 32px; width: 100%; box-sizing: border-box; }
+
+.byr-products-section {
+  display: grid; grid-template-columns: 280px 1fr; gap: 32px; align-items: start;
+}
 
 .byr-sidebar {
   background: var(--byr-card-bg); padding: 24px;
-  border-radius: var(--byr-radius);
+  border-radius: var(--byr-radius); position: sticky; top: 140px;
   box-shadow: var(--byr-shadow-sm); border: 1px solid var(--byr-card-border);
-  height: fit-content;
+  height: fit-content; max-height: calc(100vh - 160px); overflow-y: auto;
 }
 .byr-sidebar__title {
   font-size: 0.95rem; font-weight: 700; color: var(--byr-text-1);
@@ -321,8 +408,14 @@
 .byr-card:hover { transform: translateY(-4px); box-shadow: var(--byr-shadow-md); }
 .byr-card__img-wrap {
   width: 100%; height: 240px; background: var(--byr-bg);
-  display: flex; justify-content: center; align-items: center;
+  display: flex; justify-content: center; align-items: center; position: relative;
 }
+.byr-card__wishlist {
+  position: absolute; top: 12px; right: 12px; background: rgba(255,255,255,0.8);
+  width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem; cursor: pointer; color: var(--byr-text-muted); transition: all 0.2s; backdrop-filter: blur(4px);
+}
+.byr-card__wishlist:hover { color: var(--byr-accent); transform: scale(1.1); }
 .byr-card__img { width: 100%; height: 100%; object-fit: cover; }
 .byr-card__body { padding: 16px; display: flex; flex-direction: column; gap: 6px; }
 .byr-card__brand {
@@ -333,15 +426,26 @@
   font-size: 1rem; font-weight: 600; color: var(--byr-text-1);
   line-height: 1.4; height: 2.8em; overflow: hidden;
 }
+.byr-card__rating {
+  display: flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 700; color: #eab308;
+}
+.byr-card__reviews { color: var(--byr-text-muted); font-weight: 400; }
 .byr-card__price-row { display: flex; alignItems: baseline; gap: 8px; margin-top: 4px; }
-.byr-card__price { font-size: 1.25rem; font-weight: 700; color: var(--byr-text-1); }
+.byr-card__price { font-size: 1.25rem; font-weight: 800; color: var(--byr-text-1); }
 .byr-card__compare { font-size: 0.95rem; color: var(--byr-text-muted); text-decoration: line-through; }
 .byr-card__discount { font-size: 0.85rem; font-weight: 700; color: var(--badge-green-txt); }
+.byr-card__delivery { font-size: 0.8rem; font-weight: 600; color: var(--byr-text-3); margin-top: 4px; display: flex; align-items: center; gap: 4px; }
 .byr-card__badge {
-  padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; align-self: flex-start;
+  padding: 4px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: 700; align-self: flex-start; margin-top: 8px;
 }
 .byr-card__badge--in { background: var(--badge-green-bg); color: var(--badge-green-txt); }
 .byr-card__badge--out { background: var(--badge-red-bg); color: var(--badge-red-txt); }
+.byr-card__add-btn {
+  margin-top: 12px; width: 100%; background: transparent; border: 1px solid var(--byr-border);
+  padding: 10px; border-radius: var(--byr-radius-sm); font-weight: 700; color: var(--byr-accent); cursor: pointer;
+  transition: all var(--byr-transition);
+}
+.byr-card__add-btn:hover { background: var(--byr-accent-light); border-color: var(--byr-accent); }
 
 .byr-pagination { display: flex; justify-content: center; gap: 8px; margin-top: 40px; }
 .byr-page-btn {
@@ -433,7 +537,11 @@
   .byr-mobile-filter-btn { display: inline-flex !important; }
   .byr-cart-layout { grid-template-columns: 1fr; }
   .byr-summary { position: static; }
-  .byr-page { grid-template-columns: 1fr; }
+  .byr-products-section { grid-template-columns: 1fr; }
+  .byr-hero { flex-direction: column; padding: 24px; text-align: center; }
+  .byr-hero__content { max-width: 100%; margin-bottom: 24px; }
+  .byr-hero__img { width: 80%; }
+  .byr-promo-strip { flex-direction: column; text-align: center; gap: 16px; padding: 24px; }
   .byr-sidebar { display: none; }
   .byr-sidebar--open {
     display: block; position: fixed; top: 0; left: 0; width: 280px; height: 100vh;
@@ -457,4 +565,7 @@
   .byr-card__img-wrap { height: 160px; }
   .byr-container { padding: 16px; }
   .byr-page { padding: 16px; gap: 16px; }
+  .byr-section { padding: 0 16px; }
+  .byr-benefits { flex-direction: column; padding: 16px; gap: 16px; align-items: flex-start; overflow: visible; }
+  .byr-hero__img { width: 100%; }
 }
