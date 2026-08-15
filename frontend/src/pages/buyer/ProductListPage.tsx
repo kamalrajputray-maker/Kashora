@@ -149,10 +149,6 @@ export const ProductListPage: React.FC = () => {
                 <img src="https://images.unsplash.com/photo-1610030469983-98e550d6193c?q=80&w=300&auto=format&fit=crop" className="byr-promo-card__img" alt="Sarees" />
                 <div className="byr-promo-card__bottom">Sarees</div>
              </div>
-             <div className="byr-promo-card" onClick={() => { updateParam('category', 'jewellery'); document.getElementById('products-grid')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ cursor: 'pointer' }}>
-                <img src="https://images.unsplash.com/photo-1599643478514-4a4e09d949c8?q=80&w=300&auto=format&fit=crop" className="byr-promo-card__img" alt="Jewellery" />
-                <div className="byr-promo-card__bottom">Jewellery</div>
-             </div>
            </div>
         </div>
 
@@ -176,19 +172,19 @@ export const ProductListPage: React.FC = () => {
         {/* 6. Brand Category Cards */}
         <div className="byr-section">
            <div className="byr-h-scroll">
-             <div className="byr-promo-card" onClick={() => updateParam('category', 'electronics')} style={{ cursor: 'pointer' }}>
+             <div className="byr-promo-card" onClick={() => { updateParam('category', 'electronics'); document.getElementById('products-grid')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ cursor: 'pointer' }}>
                 <img src="https://images.unsplash.com/photo-1498049794561-7780e7231661?q=80&w=300&auto=format&fit=crop" className="byr-promo-card__img" alt="Electronics" />
                 <div className="byr-promo-card__bottom">Electronics</div>
              </div>
-             <div className="byr-promo-card" onClick={() => updateParam('category', 'beauty')} style={{ cursor: 'pointer' }}>
+             <div className="byr-promo-card" onClick={() => { updateParam('category', 'beauty'); document.getElementById('products-grid')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ cursor: 'pointer' }}>
                 <img src="https://images.unsplash.com/photo-1596462502278-27bfdc403348?q=80&w=300&auto=format&fit=crop" className="byr-promo-card__img" alt="Makeup" />
                 <div className="byr-promo-card__bottom">Makeup</div>
              </div>
-             <div className="byr-promo-card" onClick={() => updateParam('category', 'bags')} style={{ cursor: 'pointer' }}>
+             <div className="byr-promo-card" onClick={() => { updateParam('category', 'bags'); document.getElementById('products-grid')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ cursor: 'pointer' }}>
                 <img src="https://images.unsplash.com/photo-1590874103328-eac38a683ce7?q=80&w=300&auto=format&fit=crop" className="byr-promo-card__img" alt="Bags" />
                 <div className="byr-promo-card__bottom">Bags</div>
              </div>
-             <div className="byr-promo-card" onClick={() => updateParam('category', 'footwear')} style={{ cursor: 'pointer' }}>
+             <div className="byr-promo-card" onClick={() => { updateParam('category', 'footwear'); document.getElementById('products-grid')?.scrollIntoView({ behavior: 'smooth' }); }} style={{ cursor: 'pointer' }}>
                 <img src="https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=300&auto=format&fit=crop" className="byr-promo-card__img" alt="Footwear" />
                 <div className="byr-promo-card__bottom">Footwear</div>
              </div>
