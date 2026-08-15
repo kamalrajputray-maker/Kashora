@@ -161,11 +161,14 @@ class DashboardChartsView(APIView):
         })
 
 
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
+
 class SiteSettingsView(APIView):
     """
     GET /api/v1/dashboard/settings/ (Public)
     PUT /api/v1/dashboard/settings/ (Admin/SuperAdmin)
     """
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
     def get_permissions(self):
         if self.request.method in ['PUT', 'PATCH']:
             return [IsAuthenticated(), IsAdminOrSuperAdmin()]
