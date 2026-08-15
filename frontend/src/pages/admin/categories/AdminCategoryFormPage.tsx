@@ -4,20 +4,20 @@ import { adminCategoryAPI, Category, CategoryRequest } from '../../../services/a
 
 // Premium Meesho/Amazon style styling
 const S = {
-  container: { padding: '2rem', maxWidth: '650px', margin: '0 auto', fontFamily: "'Inter', sans-serif", minHeight: '100vh', background: '#f8fafc' },
+  container: { padding: '2rem', maxWidth: '1000px', margin: '0 auto' },
   header: { marginBottom: '2rem' },
-  title: { fontSize: '1.75rem', fontWeight: '800', color: '#0f172a', margin: 0 },
-  card: { background: '#fff', padding: '2rem', borderRadius: '12px', boxShadow: '0 4px 20px rgba(0, 0, 0, 0.04)', border: '1px solid #e2e8f0' },
+  title: { fontSize: '1.75rem', fontWeight: 600, color: 'var(--adm-text-1)', margin: 0 },
+  card: { background: 'var(--adm-card-bg)', padding: '2rem', borderRadius: '12px', border: '1px solid var(--adm-card-border)' },
   field: { marginBottom: '1.25rem' },
-  label: { display: 'block', fontSize: '0.85rem', fontWeight: '700', color: '#334155', marginBottom: '0.5rem', textTransform: 'uppercase' as const, letterSpacing: '0.04em' },
-  input: { width: '100%', padding: '0.75rem 1rem', border: '1.5px solid #e2e8f0', borderRadius: '8px', fontSize: '0.95rem', outline: 'none', transition: 'border-color 0.2s', boxSizing: 'border-box' as const },
-  textarea: { width: '100%', padding: '0.75rem 1rem', border: '1.5px solid #e2e8f0', borderRadius: '8px', fontSize: '0.95rem', outline: 'none', resize: 'vertical' as const, minHeight: '120px', boxSizing: 'border-box' as const },
-  select: { width: '100%', padding: '0.75rem 1rem', border: '1.5px solid #e2e8f0', borderRadius: '8px', fontSize: '0.95rem', outline: 'none', background: '#fff', boxSizing: 'border-box' as const },
+  label: { display: 'block', fontSize: '0.85rem', fontWeight: 500, color: 'var(--adm-text-2)', marginBottom: '0.5rem', textTransform: 'uppercase' as const, letterSpacing: '0.04em' },
+  input: { width: '100%', padding: '0.75rem 1rem', border: '1px solid var(--adm-card-border)', borderRadius: '8px', fontSize: '0.95rem', outline: 'none', transition: 'border-color 0.2s', boxSizing: 'border-box' as const, background: 'var(--adm-bg)', color: 'var(--adm-text-1)' },
+  textarea: { width: '100%', padding: '0.75rem 1rem', border: '1px solid var(--adm-card-border)', borderRadius: '8px', fontSize: '0.95rem', outline: 'none', resize: 'vertical' as const, minHeight: '120px', boxSizing: 'border-box' as const, background: 'var(--adm-bg)', color: 'var(--adm-text-1)' },
+  select: { width: '100%', padding: '0.75rem 1rem', border: '1px solid var(--adm-card-border)', borderRadius: '8px', fontSize: '0.95rem', outline: 'none', background: 'var(--adm-bg)', color: 'var(--adm-text-1)', boxSizing: 'border-box' as const },
   checkboxRow: { display: 'flex', alignItems: 'center', gap: '0.75rem', margin: '1.5rem 0' },
-  checkbox: { width: '18px', height: '18px', cursor: 'pointer' },
-  submitBtn: { background: 'linear-gradient(135deg, #9333ea, #db2777)', color: '#fff', border: 'none', padding: '0.85rem 1.5rem', borderRadius: '8px', fontSize: '1rem', fontWeight: '600', cursor: 'pointer', flex: 1, boxShadow: '0 4px 14px rgba(147, 51, 234, 0.3)', transition: 'opacity 0.2s' },
-  cancelBtn: { background: '#f1f5f9', color: '#475569', border: '1.5px solid #cbd5e1', padding: '0.85rem 1.5rem', borderRadius: '8px', fontSize: '1rem', fontWeight: '600', cursor: 'pointer' },
-  errorAlert: { background: '#fef2f2', border: '1px solid #fca5a5', color: '#b91c1c', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', fontSize: '0.875rem' },
+  checkbox: { width: '18px', height: '18px', cursor: 'pointer', accentColor: 'var(--adm-accent)' },
+  submitBtn: { backgroundColor: 'var(--adm-accent)', color: '#fff', border: 'none', padding: '0.85rem 1.5rem', borderRadius: '8px', fontSize: '1rem', fontWeight: 600, cursor: 'pointer', flex: 1 },
+  cancelBtn: { background: 'transparent', color: 'var(--adm-text-2)', border: '1px solid var(--adm-card-border)', padding: '0.85rem 1.5rem', borderRadius: '8px', fontSize: '1rem', fontWeight: 600, cursor: 'pointer' },
+  errorAlert: { background: 'rgba(239, 68, 68, 0.1)', border: '1px solid #ef4444', color: '#ef4444', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', fontSize: '0.875rem' },
 };
 
 const AdminCategoryFormPage: React.FC = () => {
@@ -121,14 +121,14 @@ const AdminCategoryFormPage: React.FC = () => {
   };
 
   if (loading && isEditMode) {
-    return <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>Loading category details...</div>;
+    return <div style={{ padding: '3rem', textAlign: 'center', color: 'var(--adm-text-2)' }}>Loading category details...</div>;
   }
 
   return (
     <div style={S.container}>
       <div style={S.header}>
         <h1 style={S.title}>{isEditMode ? '✨ Edit Category' : '✨ Create Category'}</h1>
-        <p style={{ color: '#64748b', marginTop: '0.25rem' }}>
+        <p style={{ color: 'var(--adm-text-2)', marginTop: '0.25rem' }}>
           {isEditMode ? 'Modify category properties and hierarchy.' : 'Add a new category to organize catalog listings.'}
         </p>
       </div>
@@ -171,12 +171,12 @@ const AdminCategoryFormPage: React.FC = () => {
               style={S.input}
             />
             {currentImage && !formData.image && (
-              <div style={{ marginTop: '8px', fontSize: '0.85rem', color: '#64748b' }}>
-                Current Image: <a href={currentImage} target="_blank" rel="noreferrer" style={{ color: '#9333ea' }}>View</a>
+              <div style={{ marginTop: '8px', fontSize: '0.85rem', color: 'var(--adm-text-3)' }}>
+                Current Image: <a href={currentImage} target="_blank" rel="noreferrer" style={{ color: 'var(--adm-accent)' }}>View</a>
               </div>
             )}
             {formData.image && (
-              <div style={{ marginTop: '8px', fontSize: '0.85rem', color: '#16a34a' }}>
+              <div style={{ marginTop: '8px', fontSize: '0.85rem', color: 'var(--adm-accent)' }}>
                 New image selected: {formData.image.name}
               </div>
             )}
@@ -217,7 +217,7 @@ const AdminCategoryFormPage: React.FC = () => {
               onChange={handleChange} 
               style={S.checkbox}
             />
-            <label htmlFor="is_active" style={{ fontSize: '0.9rem', fontWeight: '700', color: '#334155', cursor: 'pointer' }}>
+            <label htmlFor="is_active" style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--adm-text-1)', cursor: 'pointer' }}>
               Mark this category as Active (Publicly visible)
             </label>
           </div>
