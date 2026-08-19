@@ -13,7 +13,7 @@ from playwright.sync_api import sync_playwright, expect
 # ------------------------------------------------------------------
 FRONTEND  = "http://localhost:3000"
 API_BASE  = "http://localhost:8000/api/v1"
-SLOW_MO   = 600          # ms between actions  (set to 0 for fast run)
+SLOW_MO   = 2000         # ms between actions  (set to 0 for fast run)
 HEADLESS  = False        # False = visible browser window
 
 ts           = int(time.time())
@@ -271,15 +271,21 @@ def run_tests(page):
 
     search = page.get_by_placeholder("Search for products, brands and more...")
     search.fill(PRODUCT_NAME)
+    time.sleep(1) # pause before pressing enter so manager sees search term
     search.press("Enter")
 
     # wait for the search results to show at least one product card
     page.wait_for_selector(".byr-card__name", timeout=15000)
+    time.sleep(2) # pause to let manager see the search results!
     page.locator(".byr-card").first.click()
 
     # wait for detail page to load
     page.wait_for_selector("text=Product Description", timeout=15000)
     ok(f"Buyer can see product: '{PRODUCT_NAME}'")
+    
+    # Scroll slightly so product details are fully in view
+    page.evaluate("window.scrollBy({ top: 300, behavior: 'smooth' })")
+    time.sleep(3) # PAUSE: let manager see the product details, stock, and brand!
 
     expect(page.locator("text=E2E Brand")).to_be_visible()
     ok("Brand 'E2E Brand' is visible to buyer ✔")
@@ -300,6 +306,7 @@ def run_tests(page):
     
     # Handle the window.alert that appears when adding to cart
     page.once("dialog", lambda dialog: dialog.accept())
+    time.sleep(1) # wait right before clicking add to cart
     add_btn.click()
     
     # Wait for redirection to /cart
@@ -322,13 +329,22 @@ def run_tests(page):
     page.wait_for_selector("text=Shipping Address", timeout=10000)
     ok("Navigated to Checkout Page ✔")
     
-    # Fill Address Details
+    # Fill Address Details (Visually clear for the manager)
     fill(page, 'input[name="full_name"]', "Test Buyer")
     fill(page, 'input[name="phone"]', "9876543210")
     fill(page, 'input[name="line1"]', "123 Playwright Street")
+    fill(page, 'input[name="line2"]', "Near Tech Park")
     fill(page, 'input[name="city"]', "Test City")
     fill(page, 'input[name="state"]', "Test State")
     fill(page, 'input[name="pincode"]', "123456")
+    
+    # Fill Order Notes
+    fill(page, 'textarea[name="notes"]', "Please deliver between 9 AM and 5 PM.")
+    ok("Filled Shipping Address and Order Notes ✔")
+    
+    # Scroll down smoothly so the manager can read the Order Summary
+    page.evaluate("window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' })")
+    time.sleep(3)  # Pause to let them read the summary
     
     # Place Order
     page.get_by_role("button", name="Place Order (COD)").click()
@@ -337,6 +353,10 @@ def run_tests(page):
     wait_url(page, "/orders/")
     page.wait_for_selector("text=Your order has been placed successfully!", timeout=15000)
     ok("Order placed successfully and redirected to Order Details ✔")
+    
+    # Scroll up to show the success message clearly
+    page.evaluate("window.scrollTo({ top: 0, behavior: 'smooth' })")
+    time.sleep(2)
 
     # --------------------------------------------------------------
     print("\n")
